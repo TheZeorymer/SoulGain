@@ -2,22 +2,29 @@ pub mod types;
 pub mod memory;
 pub mod plasticity;
 pub mod run;
+
 use types::UVal;
 use memory::MemorySystem;
 use plasticity::{Event, Plasticity, VMError};
 use std::sync::Arc;
 
+// --- OPCODE DEFINITIONS ---
 pub const OP_LITERAL: i64 = 0;
 pub const OP_ADD: i64 = 1;
+pub const OP_SUB: i64 = 2; // New: Subtraction
+pub const OP_MUL: i64 = 3; // New: Multiplication
+pub const OP_EQ: i64 = 5;  // New: Equality Check
 pub const OP_STORE: i64 = 6;
 pub const OP_LOAD: i64 = 7;
 pub const OP_HALT: i64 = 8;
+pub const OP_GT: i64 = 9;  // New: Greater Than
+pub const OP_NOT: i64 = 10; // New: Logical Not
 
 pub struct SoulGainVM {
     pub stack: Vec<UVal>,
     pub memory: MemorySystem,
     pub ip: usize,
-    pub program: Vec<f64>, // Program remains f64 for bytecode compactness
+    pub program: Vec<f64>,
     pub plasticity: Plasticity,
 }
 
@@ -52,6 +59,7 @@ impl SoulGainVM {
                 }
             };
 
+            // Capture the event for STDP learning (Time-based now!)
             self.plasticity.observe(Event::Opcode { opcode, stack_depth: self.stack.len() });
 
             match opcode {
@@ -70,7 +78,6 @@ impl SoulGainVM {
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
                     
-                    // NEW: Type-aware Addition
                     match (a, b) {
                         (UVal::Number(na), UVal::Number(nb)) => self.stack.push(UVal::Number(na + nb)),
                         (UVal::String(sa), UVal::String(sb)) => {
@@ -81,30 +88,80 @@ impl SoulGainVM {
                         _ => self.plasticity.observe(Event::Error(VMError::InvalidOpcode(opcode))),
                     }
                 }
+                
+                OP_SUB => {
+                     if self.stack.len() < 2 { self.plasticity.observe(Event::Error(VMError::StackUnderflow)); continue; }
+                     let b = self.stack.pop().unwrap();
+                     let a = self.stack.pop().unwrap();
+                     if let (UVal::Number(na), UVal::Number(nb)) = (a, b) {
+                         self.stack.push(UVal::Number(na - nb));
+                     }
+                }
+
+                OP_EQ => {
+                    if self.stack.len() < 2 { self.plasticity.observe(Event::Error(VMError::StackUnderflow)); continue; }
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    self.stack.push(UVal::Bool(a == b));
+                }
+
+                OP_GT => {
+                    if self.stack.len() < 2 { self.plasticity.observe(Event::Error(VMError::StackUnderflow)); continue; }
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    if let (UVal::Number(na), UVal::Number(nb)) = (a, b) {
+                        self.stack.push(UVal::Bool(na > nb));
+                    }
+                }
 
                 OP_STORE => {
-                    if self.stack.len() < 2 { continue; }
-                    let val = self.stack.pop().unwrap();
-                    let addr_val = self.stack.pop().unwrap();
+                    if self.stack.len() < 2 { 
+                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
+                        continue; 
+                    }
+                    let val = self.stack.pop().unwrap();     // Can now be String/Object
+                    let addr_val = self.stack.pop().unwrap(); // Address
                     
                     if let UVal::Number(addr) = addr_val {
-                        // For now, we only store the numeric value back to memory 
-                        // (We will update memory.rs to store UVals later)
-                        if let UVal::Number(v) = val {
-                            self.memory.write(addr, v);
+                        if self.memory.write(addr, val) {
                             self.plasticity.observe(Event::MemoryWrite);
+                        }
+                    } else {
+                        self.plasticity.observe(Event::Error(VMError::InvalidOpcode(opcode)));
+                    }
+                }
+
+                OP_LOAD => {
+                    if self.stack.is_empty() {
+                         self.plasticity.observe(Event::Error(VMError::StackUnderflow));
+                         continue;
+                    }
+                    let addr_val = self.stack.pop().unwrap();
+                    if let UVal::Number(addr) = addr_val {
+                        if let Some(v) = self.memory.read(addr) {
+                            self.stack.push(v);
+                            self.plasticity.observe(Event::MemoryRead);
+                        } else {
+                            self.stack.push(UVal::Nil);
                         }
                     }
                 }
 
                 OP_HALT => break,
+                
                 _ => self.plasticity.observe(Event::Error(VMError::InvalidOpcode(opcode))),
             }
+            
+            // Metabolic decay
             self.plasticity.decay_long_term();
         }
     }
 }
 fn main() {
+    println!("SoulGain substrate (STDP Enabled) running.");
+    
     run::test_numeric_logic();
     run::test_string_concatenation();
+    run::test_boolean_logic();      // New test
+    run::test_memory_persistence(); // New test
 }
