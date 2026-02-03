@@ -19,9 +19,16 @@ pub const OP_LOAD: i64 = 7;
 pub const OP_HALT: i64 = 8;
 pub const OP_GT: i64 = 9;  // New: Greater Than
 pub const OP_NOT: i64 = 10; // New: Logical Not
+pub const OP_JMP: i64 = 11;
+pub const OP_JMP_IF: i64 = 12;
+pub const OP_CALL: i64 = 13;
+pub const OP_RET: i64 = 14;
+
+const BRAIN_PATH: &str = "brain_test.json";
 
 pub struct SoulGainVM {
     pub stack: Vec<UVal>,
+    pub call_stack: Vec<usize>,
     pub memory: MemorySystem,
     pub ip: usize,
     pub program: Vec<f64>,
@@ -32,6 +39,7 @@ impl SoulGainVM {
     pub fn new(program: Vec<f64>) -> Self {
         Self {
             stack: Vec::new(),
+            call_stack: Vec::new(),
             memory: MemorySystem::new(),
             ip: 0,
             program,
@@ -147,6 +155,73 @@ impl SoulGainVM {
                     }
                 }
 
+                OP_JMP => {
+                    if self.ip >= self.program.len() { break; }
+                    let target = self.program[self.ip];
+                    self.ip += 1;
+                    if !target.is_finite() || target < 0.0 {
+                        self.plasticity.observe(Event::Error(VMError::InvalidJump(target)));
+                        continue;
+                    }
+                    let new_ip = target.round() as usize;
+                    if new_ip >= self.program.len() {
+                        self.plasticity.observe(Event::Error(VMError::InvalidJump(target)));
+                        continue;
+                    }
+                    self.ip = new_ip;
+                }
+
+                OP_JMP_IF => {
+                    if self.ip >= self.program.len() {
+                        self.plasticity.observe(Event::Error(VMError::InvalidJump(f64::NAN)));
+                        break;
+                    }
+                    if self.stack.is_empty() {
+                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
+                        continue;
+                    }
+                    let target = self.program[self.ip];
+                    self.ip += 1;
+                    let condition = self.stack.pop().unwrap();
+                    if condition.is_truthy() {
+                        if !target.is_finite() || target < 0.0 {
+                            self.plasticity.observe(Event::Error(VMError::InvalidJump(target)));
+                            continue;
+                        }
+                        let new_ip = target.round() as usize;
+                        if new_ip >= self.program.len() {
+                            self.plasticity.observe(Event::Error(VMError::InvalidJump(target)));
+                            continue;
+                        }
+                        self.ip = new_ip;
+                    }
+                }
+
+                OP_CALL => {
+                    if self.ip >= self.program.len() { break; }
+                    let target = self.program[self.ip];
+                    self.ip += 1;
+                    if !target.is_finite() || target < 0.0 {
+                        self.plasticity.observe(Event::Error(VMError::InvalidJump(target)));
+                        continue;
+                    }
+                    let new_ip = target.round() as usize;
+                    if new_ip >= self.program.len() {
+                        self.plasticity.observe(Event::Error(VMError::InvalidJump(target)));
+                        continue;
+                    }
+                    self.call_stack.push(self.ip);
+                    self.ip = new_ip;
+                }
+
+                OP_RET => {
+                    if let Some(return_ip) = self.call_stack.pop() {
+                        self.ip = return_ip;
+                    } else {
+                        self.plasticity.observe(Event::Error(VMError::ReturnStackUnderflow));
+                    }
+                }
+
                 OP_HALT => break,
                 
                 _ => self.plasticity.observe(Event::Error(VMError::InvalidOpcode(opcode))),
@@ -166,11 +241,20 @@ pub mod run; // Declares the run.rs module
 
 fn main() {
     println!("SoulGain substrate (STDP Enabled) running.");
+
+    let mut vm = SoulGainVM::new(vec![]);
+    if vm.plasticity.load_from_file(BRAIN_PATH).is_ok() {
+        println!("Loaded brain from {}", BRAIN_PATH);
+    }
     
     // Call the test functions defined in run.rs
-    run::test_numeric_logic();
-    run::test_string_concatenation();
-    run::test_boolean_logic();
-    run::test_memory_persistence();
-    run::test_learning_from_failure();
+    run::test_numeric_logic(&mut vm);
+    run::test_string_concatenation(&mut vm);
+    run::test_boolean_logic(&mut vm);
+    run::test_memory_persistence(&mut vm);
+    run::test_learning_from_failure(&mut vm);
+
+    if let Err(err) = vm.plasticity.save_to_file(BRAIN_PATH) {
+        eprintln!("Failed to save brain: {}", err);
+    }
 }
