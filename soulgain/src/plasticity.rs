@@ -1,9 +1,16 @@
 use std::collections::HashMap;
-use std::time::{Instant, Duration}; // We need time, not just counts
+use std::sync::{Arc, RwLock, mpsc};
+use std::thread;
+use std::time::Instant; // Removed unused 'Duration'
+use std::path::Path;
 use std::fs::{File, OpenOptions};
 use std::io::{self, BufReader, BufWriter};
-use std::path::Path;
 use serde::{Deserialize, Serialize};
+
+// --- CONSTANTS FOR BIOLOGICAL TUNING ---
+const A_PLUS: f64 = 0.1;       // Max synaptic strengthening (LTP)
+const TAU: f64 = 0.020;        // Time constant (20ms) - The "window of causality"
+const NORMALIZATION_CAP: f64 = 5.0; // Max total weight output for a single neuron
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum VMError {
@@ -13,10 +20,7 @@ pub enum VMError {
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub enum Event {
-    Opcode {
-        opcode: i64,
-        stack_depth: usize,
-    },
+    Opcode { opcode: i64, stack_depth: usize },
     MemoryRead,
     MemoryWrite,
     Error(VMError),
@@ -24,49 +28,14 @@ pub enum Event {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PersistentMemory {
-    // REPLACED: 'counts' is deleted. We only care about the weight of the connection.
     pub weights: HashMap<(Event, Event), f64>,
 }
 
 impl PersistentMemory {
     pub fn new() -> Self {
-        Self {
-            weights: HashMap::new(),
-        }
+        Self { weights: HashMap::new() }
     }
 
-    /// The STDP Rule: The core logic of your new substrate.
-    /// delta_t is in milliseconds.
-    /// - Positive delta_t (Pre -> Post) = Potentiation (Strengthen)
-    /// - Negative delta_t (Post -> Pre) = Depression (Weaken)
-    pub fn apply_stdp(&mut self, from: Event, to: Event, delta_t: f64) {
-        let weight = self.weights.entry((from, to)).or_insert(0.0);
-        
-        // Biological constants adapted for the VM
-        let a_plus = 0.1;   // Max learning rate
-        let a_minus = 0.12; // Max forgetting rate (slightly higher to prune bad logic)
-        let tau = 20.0;     // Time window (20ms)
-
-        if delta_t > 0.0 {
-            // Causal Link: "From" happened before "To"
-            *weight += a_plus * (-delta_t / tau).exp();
-        } else {
-            // Anti-Causal Link: "To" happened before "From" (or too late)
-            // We actively punish this connection.
-            *weight -= a_minus * (delta_t / tau).exp();
-        }
-        
-        // Clamp weights to keep the system stable (-1.0 to 1.0)
-        *weight = weight.clamp(-1.0, 1.0);
-    }
-
-    pub fn decay(&mut self, rate: f64) {
-        for v in self.weights.values_mut() {
-            *v *= rate;
-        }
-    }
-
-    // Standard save/load boilerplate remains the same
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let file = OpenOptions::new().write(true).create(true).truncate(true).open(path)?;
         serde_json::to_writer_pretty(BufWriter::new(file), self)?;
@@ -80,66 +49,86 @@ impl PersistentMemory {
 }
 
 pub struct Plasticity {
-    // REPLACED: 'short_counts' is gone.
-    // We now use a 'registry' to track the EXACT TIME an event last happened.
-    // This is the "Short Term Memory" trace.
-    pub registry: HashMap<Event, Instant>,
+    // ASYNC ARCHITECTURE: We send events to a worker thread
+    sender: mpsc::Sender<(Event, Instant)>,
     
-    pub memory: PersistentMemory,
-    pub long_decay: f64,
+    // SHARED STATE: The VM execution runs on the main thread, 
+    // but the weights are updated by the worker. We use RwLock for safety.
+    pub memory: Arc<RwLock<PersistentMemory>>,
 }
 
 impl Plasticity {
     pub fn new() -> Self {
+        // FIX: Explicitly tell Rust this channel carries (Event, Instant)
+        let (tx, rx) = mpsc::channel::<(Event, Instant)>();
+        
+        let memory = Arc::new(RwLock::new(PersistentMemory::new()));
+        
+        // Clone the Arc to pass to the worker thread
+        let mem_clone = memory.clone();
+
+        // --- THE STDP WORKER THREAD ---
+        thread::spawn(move || {
+            let mut last_event_data: Option<(Event, Instant)> = None;
+
+            // Process events as they arrive
+            while let Ok((current_event, current_time)) = rx.recv() {
+                // Acquire write lock to update the brain
+                let mut mem = mem_clone.write().unwrap();
+
+                if let Some((prev_event, prev_time)) = last_event_data {
+                    // 1. CALCULATE DELTA T (in seconds)
+                    let delta_t = current_time.duration_since(prev_time).as_secs_f64();
+
+                    // 2. STDP EXPONENTIAL KERNEL
+                    // We only care about events that happen within a causal window (e.g., 100ms)
+                    if delta_t < 0.1 {
+                        // Formula: A * e^(-dt / tau)
+                        let weight_change = A_PLUS * (-delta_t / TAU).exp();
+                        
+                        let weight = mem.weights.entry((prev_event, current_event)).or_insert(0.0);
+                        *weight += weight_change;
+                    }
+
+                    // 3. COMPETITIVE NORMALIZATION
+                    // Ensure the total outgoing weight from 'prev_event' doesn't explode.
+                    let mut sum = 0.0;
+                    for ((from, _), w) in mem.weights.iter() {
+                        if *from == prev_event { sum += *w; }
+                    }
+
+                    if sum > NORMALIZATION_CAP {
+                        let factor = NORMALIZATION_CAP / sum;
+                        for ((from, _), w) in mem.weights.iter_mut() {
+                            if *from == prev_event { *w *= factor; }
+                        }
+                    }
+                }
+
+                // Update the trace
+                last_event_data = Some((current_event, current_time));
+            }
+        });
+
         Self {
-            registry: HashMap::new(), // Stores ephemeral timing traces
-            memory: PersistentMemory::new(),
-            long_decay: 0.999,
+            sender: tx,
+            memory,
         }
     }
 
-    pub fn observe(&mut self, current_event: Event) {
+    pub fn observe(&self, event: Event) {
+        // Capture the EXACT timestamp on the main thread
         let now = Instant::now();
+        // Fire and forget - don't block execution
+        let _ = self.sender.send((event, now));
+    }
 
-        // 1. Iterate through recent history (the registry)
-        // We look for any event that happened within the last 100ms
-        let mut updates = Vec::new();
-        
-        for (prev_event, &prev_time) in &self.registry {
-            if prev_event == &current_event { continue; } // Don't link event to itself immediately
-
-            // Calculate the time difference in milliseconds
-            let duration = now.duration_since(prev_time).as_secs_f64() * 1000.0;
-
-            // The STDP Window: Only learn if events are close in time (< 100ms)
-            if duration < 100.0 {
-                // We found a pair! Record it to update weights.
-                updates.push((*prev_event, duration));
+    pub fn decay_long_term(&self) {
+        // Main thread can occasionally trigger a decay pass
+        if let Ok(mut mem) = self.memory.write() {
+            for w in mem.weights.values_mut() {
+                *w *= 0.999;
             }
         }
-
-        // 2. Apply the STDP rule to the connections we found
-        for (prev_event, duration) in updates {
-            self.memory.apply_stdp(prev_event, current_event, duration);
-        }
-
-        // 3. Update the registry with the new event's timestamp
-        self.registry.insert(current_event, now);
-        
-        // 4. Cleanup: Remove old traces from registry to prevent memory leaks
-        // (Optional performance optimization for later, but good to keep in mind)
-    }
-
-    pub fn predict_next(&self, current: Event) -> Option<Event> {
-        // Prediction now returns the event with the strongest CAUSAL weight
-        self.memory.weights
-            .iter()
-            .filter(|((from, _), _)| *from == current)
-            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
-            .map(|((_, to), _)| *to)
-    }
-
-    pub fn decay_long_term(&mut self) {
-        self.memory.decay(self.long_decay);
     }
 }

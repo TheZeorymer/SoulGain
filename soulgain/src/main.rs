@@ -157,11 +157,20 @@ impl SoulGainVM {
         }
     }
 }
+pub mod types;
+pub mod memory;
+pub mod plasticity;
+pub mod run; // Declares the run.rs module
+
+// ... (existing imports and constants)
+
 fn main() {
     println!("SoulGain substrate (STDP Enabled) running.");
     
+    // Call the test functions defined in run.rs
     run::test_numeric_logic();
     run::test_string_concatenation();
-    run::test_boolean_logic();      // New test
-    run::test_memory_persistence(); // New test
+    run::test_boolean_logic();
+    run::test_memory_persistence();
+    run::test_learning_from_failure();
 }
