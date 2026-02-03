@@ -6,22 +6,27 @@ use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
-pub fn test_numeric_logic() {
+pub fn test_numeric_logic(vm: &mut SoulGainVM) {
     println!("--- Testing Numeric Logic ---");
-    let program = vec![
+    vm.stack.clear();
+    vm.call_stack.clear();
+    vm.ip = 0;
+    vm.program = vec![
         OP_LITERAL as f64, 10.5,
         OP_LITERAL as f64, 20.5,
         OP_ADD as f64,
         OP_HALT as f64,
     ];
-    let mut vm = SoulGainVM::new(program);
     vm.run();
     println!("10.5 + 20.5 = {:?}", vm.stack.last().unwrap());
 }
 
-pub fn test_string_concatenation() {
+pub fn test_string_concatenation(vm: &mut SoulGainVM) {
     println!("\n--- Testing String Concatenation ---");
-    let mut vm = SoulGainVM::new(vec![OP_HALT as f64]);
+    vm.stack.clear();
+    vm.call_stack.clear();
+    vm.ip = 0;
+    vm.program = vec![OP_HALT as f64];
     vm.stack.push(UVal::String(Arc::new("Hello, ".to_string())));
     vm.stack.push(UVal::String(Arc::new("World!".to_string())));
     vm.program = vec![OP_ADD as f64, OP_HALT as f64];
@@ -29,22 +34,27 @@ pub fn test_string_concatenation() {
     println!("Result: {}", vm.stack.last().unwrap());
 }
 
-pub fn test_boolean_logic() {
+pub fn test_boolean_logic(vm: &mut SoulGainVM) {
     println!("\n--- Testing Boolean Logic ---");
-    let program = vec![
+    vm.stack.clear();
+    vm.call_stack.clear();
+    vm.ip = 0;
+    vm.program = vec![
         OP_LITERAL as f64, 10.0,
         OP_LITERAL as f64, 5.0,
         OP_GT as f64,
         OP_HALT as f64,
     ];
-    let mut vm = SoulGainVM::new(program);
     vm.run();
     println!("10.0 > 5.0 is: {}", vm.stack.last().unwrap());
 }
 
-pub fn test_memory_persistence() {
+pub fn test_memory_persistence(vm: &mut SoulGainVM) {
     println!("\n--- Testing Memory Persistence ---");
-    let mut vm = SoulGainVM::new(vec![]);
+    vm.stack.clear();
+    vm.call_stack.clear();
+    vm.ip = 0;
+    vm.program = vec![];
     vm.stack.push(UVal::Number(100.0)); 
     vm.stack.push(UVal::String(Arc::new("Soul Data".to_string())));
     vm.program = vec![OP_STORE as f64, OP_LITERAL as f64, 100.0, OP_LOAD as f64, OP_HALT as f64];
@@ -52,10 +62,12 @@ pub fn test_memory_persistence() {
     println!("Memory at 100.0: {}", vm.stack.last().unwrap());
 }
 
-pub fn test_learning_from_failure() {
+pub fn test_learning_from_failure(vm: &mut SoulGainVM) {
     println!("\n--- Testing STDP Pain Learning (Async) ---");
-    
-    let mut vm = SoulGainVM::new(vec![OP_HALT as f64]);
+    vm.stack.clear();
+    vm.call_stack.clear();
+    vm.ip = 0;
+    vm.program = vec![OP_HALT as f64];
     
     println!("Training the brain on bad code (String + Number)...");
     
