@@ -2,12 +2,13 @@ pub mod types;
 pub mod memory;
 pub mod plasticity;
 pub mod run;
+pub mod evolution;
 
 use types::UVal;
 use memory::MemorySystem;
 use plasticity::{Event, Plasticity, VMError};
+use evolution::{Oracle, Trainer}; // Add this line
 use std::sync::Arc;
-
 // --- OPCODE DEFINITIONS ---
 pub const OP_LITERAL: i64 = 0;
 pub const OP_ADD: i64 = 1;
@@ -295,23 +296,73 @@ impl SoulGainVM {
         None
     }
 }
+use std::time::Instant;
 
+struct AdditionGoal;
+impl Oracle for AdditionGoal {
+    fn evaluate(&self, _input: Vec<UVal>) -> Vec<UVal> {
+        vec![UVal::Number(2.0)]
+    }
+}
+
+struct SubtractionGoal;
+impl Oracle for SubtractionGoal {
+    fn evaluate(&self, _input: Vec<UVal>) -> Vec<UVal> {
+        // Goal: 10 - 3 = 7
+        vec![UVal::Number(7.0)]
+    }
+}
+
+struct FinancialGoal;
+impl Oracle for FinancialGoal {
+    fn evaluate(&self, _input: Vec<UVal>) -> Vec<UVal> {
+        vec![UVal::Number(60.0)]
+    }
+}
+struct DeepAdditionGoal;
+
+impl Oracle for DeepAdditionGoal {
+    fn evaluate(&self, _input: Vec<UVal>) -> Vec<UVal> {
+        // Goal: 1+1+1+1+1+1 = 6
+        vec![UVal::Number(6.0)]
+    }
+}
 fn main() {
-    println!("SoulGain substrate (STDP Enabled) running.");
+    println!("SoulGain Curriculum: Deep Addition (5-step chain)");
 
     let mut vm = SoulGainVM::new(vec![]);
-    if vm.plasticity.load_from_file(BRAIN_PATH).is_ok() {
-        println!("Loaded brain from {}", BRAIN_PATH);
-    }
-    
-    // Call the test functions defined in run.rs
-    run::test_numeric_logic(&mut vm);
-    run::test_string_concatenation(&mut vm);
-    run::test_boolean_logic(&mut vm);
-    run::test_memory_persistence(&mut vm);
-    run::test_learning_from_failure(&mut vm);
+    let _ = vm.plasticity.load_from_file(BRAIN_PATH);
+    let mut trainer = Trainer::new(vm, 10);
 
-    if let Err(err) = vm.plasticity.save_to_file(BRAIN_PATH) {
-        eprintln!("Failed to save brain: {}", err);
+    let deep_inputs = vec![
+        UVal::Number(1.0),
+        UVal::Number(1.0),
+        UVal::Number(1.0),
+        UVal::Number(1.0),
+        UVal::Number(1.0),
+        UVal::Number(1.0),
+    ];
+
+    // RUN 1: Learning the chain
+    println!("\n--- Deep Addition Run 1 (Cold) ---");
+    let start1 = Instant::now();
+    if let Some(program) = trainer.synthesize(&DeepAdditionGoal, deep_inputs.clone(), 20000) {
+        println!("SUCCESS! Time: {:?}\nProgram: {:?}", start1.elapsed(), program);
     }
+
+    // RUN 2: Testing the intuition
+    println!("\n--- Deep Addition Run 2 (Guided) ---");
+    let start2 = Instant::now();
+    if let Some(program) = trainer.synthesize(&DeepAdditionGoal, deep_inputs, 20000) {
+        println!("SUCCESS! Time: {:?}\nProgram: {:?}", start2.elapsed(), program);
+    }
+
+    // Print the "Deep" synapse
+    println!("\n--- Brain Check ---");
+    let deep_event = Event::Opcode { opcode: 1, stack_depth: 4 };
+    if let Some(best) = trainer.vm.plasticity.best_next_event(deep_event) {
+        println!("At depth 4, the brain now strongly suggests: {:?}", best);
+    }
+
+    let _ = trainer.vm.plasticity.save_to_file(BRAIN_PATH);
 }
