@@ -18,7 +18,7 @@ const NORMALIZATION_CAP: f64 = 5.0; // Max total weight output for a single neur
 pub enum VMError {
     StackUnderflow,
     InvalidOpcode(i64),
-    InvalidJump(f64),
+    InvalidJump(i64),
     ReturnStackUnderflow,
 }
 

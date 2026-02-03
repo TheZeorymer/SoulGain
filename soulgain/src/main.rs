@@ -160,12 +160,12 @@ impl SoulGainVM {
                     let target = self.program[self.ip];
                     self.ip += 1;
                     if !target.is_finite() || target < 0.0 {
-                        self.plasticity.observe(Event::Error(VMError::InvalidJump(target)));
+                        self.plasticity.observe(Event::Error(VMError::InvalidJump(-1)));
                         continue;
                     }
                     let new_ip = target.round() as usize;
                     if new_ip >= self.program.len() {
-                        self.plasticity.observe(Event::Error(VMError::InvalidJump(target)));
+                        self.plasticity.observe(Event::Error(VMError::InvalidJump(new_ip as i64)));
                         continue;
                     }
                     self.ip = new_ip;
@@ -173,7 +173,7 @@ impl SoulGainVM {
 
                 OP_JMP_IF => {
                     if self.ip >= self.program.len() {
-                        self.plasticity.observe(Event::Error(VMError::InvalidJump(f64::NAN)));
+                        self.plasticity.observe(Event::Error(VMError::InvalidJump(-1)));
                         break;
                     }
                     if self.stack.is_empty() {
@@ -185,12 +185,12 @@ impl SoulGainVM {
                     let condition = self.stack.pop().unwrap();
                     if condition.is_truthy() {
                         if !target.is_finite() || target < 0.0 {
-                            self.plasticity.observe(Event::Error(VMError::InvalidJump(target)));
+                            self.plasticity.observe(Event::Error(VMError::InvalidJump(-1)));
                             continue;
                         }
                         let new_ip = target.round() as usize;
                         if new_ip >= self.program.len() {
-                            self.plasticity.observe(Event::Error(VMError::InvalidJump(target)));
+                            self.plasticity.observe(Event::Error(VMError::InvalidJump(new_ip as i64)));
                             continue;
                         }
                         self.ip = new_ip;
@@ -202,12 +202,12 @@ impl SoulGainVM {
                     let target = self.program[self.ip];
                     self.ip += 1;
                     if !target.is_finite() || target < 0.0 {
-                        self.plasticity.observe(Event::Error(VMError::InvalidJump(target)));
+                        self.plasticity.observe(Event::Error(VMError::InvalidJump(-1)));
                         continue;
                     }
                     let new_ip = target.round() as usize;
                     if new_ip >= self.program.len() {
-                        self.plasticity.observe(Event::Error(VMError::InvalidJump(target)));
+                        self.plasticity.observe(Event::Error(VMError::InvalidJump(new_ip as i64)));
                         continue;
                     }
                     self.call_stack.push(self.ip);
@@ -232,12 +232,6 @@ impl SoulGainVM {
         }
     }
 }
-pub mod types;
-pub mod memory;
-pub mod plasticity;
-pub mod run; // Declares the run.rs module
-
-// ... (existing imports and constants)
 
 fn main() {
     println!("SoulGain substrate (STDP Enabled) running.");
