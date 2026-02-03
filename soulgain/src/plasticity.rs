@@ -199,4 +199,8 @@ impl Plasticity {
         *mem = loaded;
         Ok(())
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> codex/explore-features-for-agi-vm-improvement-bnoa3g

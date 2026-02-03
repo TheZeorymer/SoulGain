@@ -1,22 +1,20 @@
-use soulgain::{run, SoulGainVM};
-
-<<<<<<< HEAD
-use types::UVal;
-use memory::MemorySystem;
-use plasticity::{Event, Plasticity, VMError};
 use std::sync::Arc;
+
+use crate::memory::MemorySystem;
+use crate::plasticity::{Event, Plasticity, VMError};
+use crate::types::UVal;
 
 // --- OPCODE DEFINITIONS ---
 pub const OP_LITERAL: i64 = 0;
 pub const OP_ADD: i64 = 1;
-pub const OP_SUB: i64 = 2; // New: Subtraction
-pub const OP_MUL: i64 = 3; // New: Multiplication
-pub const OP_EQ: i64 = 5;  // New: Equality Check
+pub const OP_SUB: i64 = 2;
+pub const OP_MUL: i64 = 3;
+pub const OP_EQ: i64 = 5;
 pub const OP_STORE: i64 = 6;
 pub const OP_LOAD: i64 = 7;
 pub const OP_HALT: i64 = 8;
-pub const OP_GT: i64 = 9;  // New: Greater Than
-pub const OP_NOT: i64 = 10; // New: Logical Not
+pub const OP_GT: i64 = 9;
+pub const OP_NOT: i64 = 10;
 pub const OP_JMP: i64 = 11;
 pub const OP_JMP_IF: i64 = 12;
 pub const OP_CALL: i64 = 13;
@@ -24,8 +22,6 @@ pub const OP_RET: i64 = 14;
 pub const OP_INTUITION: i64 = 15;
 pub const OP_REWARD: i64 = 16;
 pub const OP_EVOLVE: i64 = 17;
-
-const BRAIN_PATH: &str = "brain_test.json";
 
 pub struct SoulGainVM {
     pub stack: Vec<UVal>,
@@ -51,9 +47,13 @@ impl SoulGainVM {
     }
 
     fn decode_opcode(x: f64) -> Result<i64, VMError> {
-        if !x.is_finite() { return Err(VMError::InvalidOpcode(-1)); }
+        if !x.is_finite() {
+            return Err(VMError::InvalidOpcode(-1));
+        }
         let i = x.round();
-        if (i - x).abs() > 1e-9 { return Err(VMError::InvalidOpcode(i as i64)); }
+        if (i - x).abs() > 1e-9 {
+            return Err(VMError::InvalidOpcode(i as i64));
+        }
         Ok(i as i64)
     }
 
@@ -70,14 +70,18 @@ impl SoulGainVM {
                 }
             };
 
-            // Capture the event for STDP learning (Time-based now!)
-            let opcode_event = Event::Opcode { opcode, stack_depth: self.stack.len() };
+            let opcode_event = Event::Opcode {
+                opcode,
+                stack_depth: self.stack.len(),
+            };
             self.last_event = Some(opcode_event);
             self.plasticity.observe(opcode_event);
 
             match opcode {
                 OP_LITERAL => {
-                    if self.ip >= self.program.len() { break; }
+                    if self.ip >= self.program.len() {
+                        break;
+                    }
                     let v = self.program[self.ip];
                     self.ip += 1;
                     self.stack.push(UVal::Number(v));
@@ -90,36 +94,59 @@ impl SoulGainVM {
                     }
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
-                    
+
                     match (a, b) {
-                        (UVal::Number(na), UVal::Number(nb)) => self.stack.push(UVal::Number(na + nb)),
+                        (UVal::Number(na), UVal::Number(nb)) => {
+                            self.stack.push(UVal::Number(na + nb));
+                        }
                         (UVal::String(sa), UVal::String(sb)) => {
                             let mut new_s = (*sa).clone();
                             new_s.push_str(&sb);
                             self.stack.push(UVal::String(Arc::new(new_s)));
-                        },
+                        }
                         _ => self.plasticity.observe(Event::Error(VMError::InvalidOpcode(opcode))),
                     }
                 }
-                
+
                 OP_SUB => {
-                     if self.stack.len() < 2 { self.plasticity.observe(Event::Error(VMError::StackUnderflow)); continue; }
-                     let b = self.stack.pop().unwrap();
-                     let a = self.stack.pop().unwrap();
-                     if let (UVal::Number(na), UVal::Number(nb)) = (a, b) {
-                         self.stack.push(UVal::Number(na - nb));
-                     }
+                    if self.stack.len() < 2 {
+                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
+                        continue;
+                    }
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    if let (UVal::Number(na), UVal::Number(nb)) = (a, b) {
+                        self.stack.push(UVal::Number(na - nb));
+                    }
+                }
+
+                OP_MUL => {
+                    if self.stack.len() < 2 {
+                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
+                        continue;
+                    }
+                    let b = self.stack.pop().unwrap();
+                    let a = self.stack.pop().unwrap();
+                    if let (UVal::Number(na), UVal::Number(nb)) = (a, b) {
+                        self.stack.push(UVal::Number(na * nb));
+                    }
                 }
 
                 OP_EQ => {
-                    if self.stack.len() < 2 { self.plasticity.observe(Event::Error(VMError::StackUnderflow)); continue; }
+                    if self.stack.len() < 2 {
+                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
+                        continue;
+                    }
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
                     self.stack.push(UVal::Bool(a == b));
                 }
 
                 OP_GT => {
-                    if self.stack.len() < 2 { self.plasticity.observe(Event::Error(VMError::StackUnderflow)); continue; }
+                    if self.stack.len() < 2 {
+                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
+                        continue;
+                    }
                     let b = self.stack.pop().unwrap();
                     let a = self.stack.pop().unwrap();
                     if let (UVal::Number(na), UVal::Number(nb)) = (a, b) {
@@ -127,14 +154,23 @@ impl SoulGainVM {
                     }
                 }
 
-                OP_STORE => {
-                    if self.stack.len() < 2 { 
+                OP_NOT => {
+                    if self.stack.is_empty() {
                         self.plasticity.observe(Event::Error(VMError::StackUnderflow));
-                        continue; 
+                        continue;
                     }
-                    let val = self.stack.pop().unwrap();     // Can now be String/Object
-                    let addr_val = self.stack.pop().unwrap(); // Address
-                    
+                    let value = self.stack.pop().unwrap();
+                    self.stack.push(UVal::Bool(!value.is_truthy()));
+                }
+
+                OP_STORE => {
+                    if self.stack.len() < 2 {
+                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
+                        continue;
+                    }
+                    let val = self.stack.pop().unwrap();
+                    let addr_val = self.stack.pop().unwrap();
+
                     if let UVal::Number(addr) = addr_val {
                         if self.memory.write(addr, val) {
                             self.plasticity.observe(Event::MemoryWrite);
@@ -147,8 +183,8 @@ impl SoulGainVM {
 
                 OP_LOAD => {
                     if self.stack.is_empty() {
-                         self.plasticity.observe(Event::Error(VMError::StackUnderflow));
-                         continue;
+                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
+                        continue;
                     }
                     let addr_val = self.stack.pop().unwrap();
                     if let UVal::Number(addr) = addr_val {
@@ -165,7 +201,11 @@ impl SoulGainVM {
                 OP_INTUITION => {
                     if let Some(last_event) = self.last_event {
                         if let Some(next_event) = self.plasticity.best_next_event(last_event) {
-                            if let Event::Opcode { opcode: predicted_opcode, .. } = next_event {
+                            if let Event::Opcode {
+                                opcode: predicted_opcode,
+                                ..
+                            } = next_event
+                            {
                                 if let Some(new_ip) = self.find_next_opcode(predicted_opcode) {
                                     self.ip = new_ip;
                                 }
@@ -175,7 +215,9 @@ impl SoulGainVM {
                 }
 
                 OP_JMP => {
-                    if self.ip >= self.program.len() { break; }
+                    if self.ip >= self.program.len() {
+                        break;
+                    }
                     let target = self.program[self.ip];
                     self.ip += 1;
                     if !target.is_finite() || target < 0.0 {
@@ -184,7 +226,8 @@ impl SoulGainVM {
                     }
                     let new_ip = target.round() as usize;
                     if new_ip >= self.program.len() {
-                        self.plasticity.observe(Event::Error(VMError::InvalidJump(new_ip as i64)));
+                        self.plasticity
+                            .observe(Event::Error(VMError::InvalidJump(new_ip as i64)));
                         continue;
                     }
                     self.ip = new_ip;
@@ -209,7 +252,8 @@ impl SoulGainVM {
                         }
                         let new_ip = target.round() as usize;
                         if new_ip >= self.program.len() {
-                            self.plasticity.observe(Event::Error(VMError::InvalidJump(new_ip as i64)));
+                            self.plasticity
+                                .observe(Event::Error(VMError::InvalidJump(new_ip as i64)));
                             continue;
                         }
                         self.ip = new_ip;
@@ -217,7 +261,9 @@ impl SoulGainVM {
                 }
 
                 OP_CALL => {
-                    if self.ip >= self.program.len() { break; }
+                    if self.ip >= self.program.len() {
+                        break;
+                    }
                     let target = self.program[self.ip];
                     self.ip += 1;
                     if !target.is_finite() || target < 0.0 {
@@ -226,7 +272,8 @@ impl SoulGainVM {
                     }
                     let new_ip = target.round() as usize;
                     if new_ip >= self.program.len() {
-                        self.plasticity.observe(Event::Error(VMError::InvalidJump(new_ip as i64)));
+                        self.plasticity
+                            .observe(Event::Error(VMError::InvalidJump(new_ip as i64)));
                         continue;
                     }
                     self.call_stack.push(self.ip);
@@ -266,18 +313,18 @@ impl SoulGainVM {
                     }
                     let index = addr.round() as usize;
                     if index >= self.program.len() {
-                        self.plasticity.observe(Event::Error(VMError::InvalidEvolve(index as i64)));
+                        self.plasticity
+                            .observe(Event::Error(VMError::InvalidEvolve(index as i64)));
                         continue;
                     }
                     self.program[index] = new_value;
                 }
 
                 OP_HALT => break,
-                
+
                 _ => self.plasticity.observe(Event::Error(VMError::InvalidOpcode(opcode))),
             }
-            
-            // Metabolic decay
+
             self.plasticity.decay_long_term();
         }
     }
@@ -293,69 +340,3 @@ impl SoulGainVM {
         None
     }
 }
-
-fn main() {
-    println!("==============================================");
-    println!("   SoulGain substrate (STDP Enabled) running  ");
-    println!("==============================================");
-
-    // Initialize the VM with an empty program
-    let mut vm = SoulGainVM::new(vec![]);
-
-    // Load persistent synaptic weights if they exist
-    if vm.plasticity.load_from_file(BRAIN_PATH).is_ok() {
-        println!("[System] Loaded evolved weights from {}", BRAIN_PATH);
-    } else {
-        println!("[System] No brain file found. Initializing tabula rasa.");
-    }
-
-    // --- FUNCTIONAL VALIDATION ---
-    run::test_numeric_logic(&mut vm);
-    run::test_string_concatenation(&mut vm);
-    run::test_boolean_logic(&mut vm);
-    run::test_memory_persistence(&mut vm);
-    run::test_learning_from_failure(&mut vm);
-
-    // --- STRESS & CAPABILITY TESTING ---
-    // These tests push the limits of the async worker and intuition logic
-    run::stress_test_metabolic_pressure(&mut vm);
-    run::stress_test_intuition_skipping(&mut vm);
-
-    // --- FINALIZATION ---
-    println!("\n[System] All tests completed.");
-    
-    // Acquire a read lock to display final synaptic count
-    if let Ok(mem) = vm.plasticity.memory.read() {
-        println!("[System] Final Synaptic Count: {}", mem.weights.len());
-    }
-
-    // Persist the learning for the next run
-    if let Err(err) = vm.plasticity.save_to_file(BRAIN_PATH) {
-        eprintln!("[Error] Failed to save evolved weights: {}", err);
-    } else {
-        println!("[System] Brain successfully saved to {}.", BRAIN_PATH);
-    }
-}
-=======
-const BRAIN_PATH: &str = "brain_test.json";
-
-fn main() {
-    println!("SoulGain substrate (STDP Enabled) running.");
-
-    let mut vm = SoulGainVM::new(vec![]);
-    if vm.plasticity.load_from_file(BRAIN_PATH).is_ok() {
-        println!("Loaded brain from {}", BRAIN_PATH);
-    }
-    
-    // Call the test functions defined in run.rs
-    run::test_numeric_logic(&mut vm);
-    run::test_string_concatenation(&mut vm);
-    run::test_boolean_logic(&mut vm);
-    run::test_memory_persistence(&mut vm);
-    run::test_learning_from_failure(&mut vm);
-
-    if let Err(err) = vm.plasticity.save_to_file(BRAIN_PATH) {
-        eprintln!("Failed to save brain: {}", err);
-    }
-}
->>>>>>> codex/explore-features-for-agi-vm-improvement-bnoa3g
