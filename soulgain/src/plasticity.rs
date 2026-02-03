@@ -30,9 +30,16 @@ pub enum Event {
     Error(VMError),
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct PersistentMemory {
     pub weights: HashMap<(Event, Event), f64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct WeightEntry {
+    from: Event,
+    to: Event,
+    weight: f64,
 }
 
 impl PersistentMemory {
@@ -42,13 +49,25 @@ impl PersistentMemory {
 
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let file = OpenOptions::new().write(true).create(true).truncate(true).open(path)?;
-        serde_json::to_writer_pretty(BufWriter::new(file), self)?;
+        let entries: Vec<WeightEntry> = self.weights.iter().map(|((from, to), weight)| {
+            WeightEntry {
+                from: *from,
+                to: *to,
+                weight: *weight,
+            }
+        }).collect();
+        serde_json::to_writer_pretty(BufWriter::new(file), &entries)?;
         Ok(())
     }
 
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         let file = File::open(path)?;
-        Ok(serde_json::from_reader(BufReader::new(file))?)
+        let entries: Vec<WeightEntry> = serde_json::from_reader(BufReader::new(file))?;
+        let mut weights = HashMap::with_capacity(entries.len());
+        for entry in entries {
+            weights.insert((entry.from, entry.to), entry.weight);
+        }
+        Ok(Self { weights })
     }
 }
 
