@@ -27,7 +27,7 @@ impl Trainer {
         }
     }
 
-    pub fn synthesize<O: Oracle>(
+    pub fn synthesize<O: Oracle + ?Sized>(
         &mut self,
         oracle: &O,
         input: Vec<UVal>,
@@ -37,7 +37,11 @@ impl Trainer {
 
         for _ in 0..attempts {
             let last_event = self.build_program(&input);
-            let result = self.execute_program(&mut self.program_buf);
+            
+            // FIX: Extract the buffer to avoid double mutable borrow of 'self'
+            let mut program = std::mem::take(&mut self.program_buf);
+            let result = self.execute_program(&mut program);
+            self.program_buf = program; // Move it back
 
             if result == expected {
                 self.vm.plasticity.observe(Event::Reward);

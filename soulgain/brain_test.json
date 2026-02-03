@@ -1,4 +1,1520 @@
-{
-  "weights": {},
-  "total_observations": 0
-}
+[
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.009437636978229254
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.26879751306716365
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.09743860845669813
+  },
+  {
+    "from": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "to": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "weight": -1.7141716102881543
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "weight": 3.8748613105480576
+  },
+  {
+    "from": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "weight": -8.421055134340898
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": "MemoryWrite",
+    "weight": 0.03335963576080365
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": "MemoryWrite",
+    "weight": 0.021918183699519075
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.4645224071052523
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.4867015853713967
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "weight": 0.0947901698396706
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "to": "MemoryWrite",
+    "weight": -1.817699746270965
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.8106724787180215
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -1.8338902918316728
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "weight": -0.23367668807988437
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.6661599953820982
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "to": "MemoryRead",
+    "weight": 0.19386122491537652
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "to": "MemoryRead",
+    "weight": -1.836860318575642
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "weight": 1.3652316454001592
+  },
+  {
+    "from": "MemoryWrite",
+    "to": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "weight": -0.23407423340382655
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "weight": 1.8293580237701785
+  },
+  {
+    "from": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "weight": -2.195229628524214
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": "MemoryRead",
+    "weight": 0.08747382660951049
+  },
+  {
+    "from": "MemoryRead",
+    "to": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "weight": -0.23263346989845185
+  },
+  {
+    "from": "MemoryRead",
+    "to": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "weight": 1.8499062693712545
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "weight": 1.4785829899098362
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.7023462290844387
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -6.258552411907851
+  },
+  {
+    "from": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "to": "MemoryWrite",
+    "weight": -2.2030999905466895
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "weight": 0.09505406130469549
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.1940804880508767
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "weight": -2.172806974461626
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "to": "MemoryRead",
+    "weight": 0.1945100511422747
+  },
+  {
+    "from": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "weight": -2.20267059062207
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.1754211372268121
+  },
+  {
+    "from": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.03718058746060901
+  },
+  {
+    "from": "MemoryRead",
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "weight": 1.390260982800474
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "weight": 1.3876271355337542
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "weight": 0.19509985858698503
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -2.1871236180159426
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "weight": -8.047567698566235
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -8.639350619293891
+  },
+  {
+    "from": "MemoryRead",
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.4968679573495173
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.1947305733999036
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": "MemoryRead",
+    "weight": 0.09975074710886495
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.46607083764416224
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.5028344567598861
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "weight": -0.23411983030438197
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.0875326497071192
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "weight": 1.6332197945240132
+  },
+  {
+    "from": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -8.758494977447908
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "weight": -1.8084680615557047
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "weight": -2.475945852019058
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.025680242646385316
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -4.435117183096517
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "weight": 1.372975889528433
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 3.528100849311786
+  },
+  {
+    "from": "MemoryRead",
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.2349922404509685
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -4.296239854627899
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": "MemoryWrite",
+    "weight": 0.09477183899614235
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": "MemoryWrite",
+    "weight": -2.173230718858379
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "weight": -3.769185380094653
+  },
+  {
+    "from": "MemoryWrite",
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.464431941224778
+  },
+  {
+    "from": "MemoryWrite",
+    "to": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "weight": 1.835916658788908
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.8045004586399287
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.46209238311884454
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": "MemoryRead",
+    "weight": 0.19582686704247382
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.8110610009063663
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "weight": -1.8171952589222746
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": "MemoryRead",
+    "weight": 0.0343800770999838
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -6.474307789135475
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.07515141505357859
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.6963537652562082
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "weight": -0.00936004518347807
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": "MemoryWrite",
+    "weight": -0.2337222189279469
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "weight": -0.23289658566105204
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.01712632008988372
+  },
+  {
+    "from": "MemoryRead",
+    "to": "MemoryWrite",
+    "weight": -0.2334575390851306
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.49787177035940694
+  },
+  {
+    "from": "MemoryRead",
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "weight": -0.23341206137072965
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "weight": 0.020448689752463913
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.27099490737161774
+  },
+  {
+    "from": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -4.355489048826519
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.032705855701393984
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.02659424988094703
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "weight": 1.505351020859143
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "to": "MemoryWrite",
+    "weight": 0.19506186116985552
+  },
+  {
+    "from": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -6.5635702773513795
+  },
+  {
+    "from": "MemoryWrite",
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "weight": 1.3734238252696684
+  },
+  {
+    "from": "MemoryWrite",
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.811025599048649
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": "MemoryRead",
+    "weight": -2.189652571808253
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "weight": 1.4135207486450594
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.02378473322049447
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "to": "MemoryWrite",
+    "weight": 0.1957127406791724
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.06993393945242453
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "weight": 1.755912996750755
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.02130794888685427
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "weight": 1.8477922435750764
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "weight": 1.475506801607636
+  },
+  {
+    "from": "MemoryRead",
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.4615709588571233
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "weight": 0.03337546683319716
+  },
+  {
+    "from": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "to": "MemoryRead",
+    "weight": -2.219887523245505
+  },
+  {
+    "from": "MemoryRead",
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.824710476506878
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.10306733605524658
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "weight": 1.8355588255183917
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "weight": 0.02049408504799319
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 9,
+        "stack_depth": 2
+      }
+    },
+    "weight": -2.1654005503679135
+  },
+  {
+    "from": "MemoryWrite",
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.5026607574332388
+  },
+  {
+    "from": "MemoryWrite",
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.26866927550296826
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -7.638508772361218
+  },
+  {
+    "from": "MemoryWrite",
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 2
+      }
+    },
+    "weight": -0.23485528881500686
+  },
+  {
+    "from": "MemoryWrite",
+    "to": "MemoryRead",
+    "weight": 0.19454794923760882
+  },
+  {
+    "from": "MemoryRead",
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.6955677740174322
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.8226030150132864
+  },
+  {
+    "from": {
+      "Error": {
+        "InvalidOpcode": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -2.2173506922900916
+  },
+  {
+    "from": "MemoryWrite",
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.19476851577328907
+  }
+]

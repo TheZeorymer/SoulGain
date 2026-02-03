@@ -41,6 +41,17 @@ impl Oracle for StoryOracle {
         vec![UVal::Number(result)]
     }
 }
+struct MulAddOracle;
+
+impl Oracle for MulAddOracle {
+    fn evaluate(&self, input: Vec<UVal>) -> Vec<UVal> {
+        let nums = numbers_from(input);
+        let a = nums.get(0).copied().unwrap_or(0.0);
+        let b = nums.get(1).copied().unwrap_or(0.0);
+        let c = nums.get(2).copied().unwrap_or(0.0);
+        vec![UVal::Number(a * b + c)]
+    }
+}
 
 struct Task {
     name: &'static str,
@@ -86,7 +97,20 @@ fn main() {
             max_program_len: 4,
             attempts: 800,
         },
+    
+    Task {
+    name: "weighted sum: (a * b) + c",
+    input: vec![
+        UVal::Number(4.0),
+        UVal::Number(5.0),
+        UVal::Number(6.0),
+    ],
+    oracle: Box::new(MulAddOracle),
+    max_program_len: 4,
+    attempts: 1500,
+},
     ];
+
 
     println!("STDP-guided synthesis benchmark (first run vs learned run)");
 
