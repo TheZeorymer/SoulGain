@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock, mpsc};
 use std::thread;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use std::path::Path;
 use std::fs::{File, OpenOptions};
 use std::io::{self, BufReader, BufWriter};
@@ -83,20 +83,24 @@ impl PersistentMemory {
 
 #[derive(Clone)]
 pub struct Plasticity {
-    sender: mpsc::Sender<(Event, Instant)>,
+    sender: mpsc::Sender<PlasticityMessage>,
     pub memory: Arc<RwLock<PersistentMemory>>,
+}
+
+enum PlasticityMessage {
+    Single(Event, Instant),
+    Batch(Vec<Event>),
 }
 
 impl Plasticity {
     pub fn new() -> Self {
-        let (tx, rx) = mpsc::channel::<(Event, Instant)>();
+        let (tx, rx) = mpsc::channel::<PlasticityMessage>();
         let memory = Arc::new(RwLock::new(PersistentMemory::new()));
         let mem_clone = memory.clone();
 
         thread::spawn(move || {
             let mut recent_events: Vec<(Event, Instant)> = Vec::new();
-
-            while let Ok((current_event, current_time)) = rx.recv() {
+            let mut process_event = |current_event: Event, current_time: Instant, recent_events: &mut Vec<(Event, Instant)>| {
                 recent_events.retain(|(_, t)| {
                     current_time.duration_since(*t).as_secs_f64() < WINDOW_S
                 });
@@ -108,14 +112,23 @@ impl Plasticity {
                     let delta_t = current_time.duration_since(*past_time).as_secs_f64();
                     if delta_t <= 0.0 || delta_t >= WINDOW_S { continue; }
 
-                    if let Event::Reward(intensity) = current_event {
-                        let scale = intensity as f64 / 100.0;
-                        if scale > 0.0 {
-                            let reward_change = (REWARD_BOOST * scale) * (-delta_t / TAU).exp();
-                            updates.push((*past_event, current_event, reward_change));
-                            normalize_sources.insert(*past_event);
+                    match current_event {
+                        Event::Reward(intensity) => {
+                            let scale = intensity as f64 / 100.0;
+                            if scale > 0.0 {
+                                let reward_change = (REWARD_BOOST * scale) * (-delta_t / TAU).exp();
+                                updates.push((*past_event, current_event, reward_change));
+                                normalize_sources.insert(*past_event);
+                            }
+                            continue;
                         }
-                        continue;
+                        Event::Error(_) => {
+                            let penalty = -REWARD_BOOST * (-delta_t / TAU).exp();
+                            updates.push((*past_event, current_event, penalty));
+                            normalize_sources.insert(*past_event);
+                            continue;
+                        }
+                        _ => {}
                     }
 
                     let ltp_change = A_PLUS * (-delta_t / TAU).exp();
@@ -162,6 +175,35 @@ impl Plasticity {
                 }
 
                 recent_events.push((current_event, current_time));
+            };
+
+            while let Ok(message) = rx.recv() {
+                match message {
+                    PlasticityMessage::Single(event, time) => {
+                        process_event(event, time, &mut recent_events);
+                    }
+                    PlasticityMessage::Batch(events) => {
+                        if events.is_empty() {
+                            continue;
+                        }
+                        let now = Instant::now();
+                        let len = events.len();
+                        let step = if len > 1 {
+                            WINDOW_S / (len as f64)
+                        } else {
+                            0.0
+                        };
+                        for (idx, event) in events.into_iter().enumerate() {
+                            let offset = (len - 1 - idx) as f64 * step;
+                            let event_time = if offset > 0.0 {
+                                now - Duration::from_secs_f64(offset)
+                            } else {
+                                now
+                            };
+                            process_event(event, event_time, &mut recent_events);
+                        }
+                    }
+                }
             }
         });
 
@@ -170,7 +212,11 @@ impl Plasticity {
 
     pub fn observe(&self, event: Event) {
         let now = Instant::now();
-        let _ = self.sender.send((event, now));
+        let _ = self.sender.send(PlasticityMessage::Single(event, now));
+    }
+
+    pub fn observe_batch(&self, events: Vec<Event>) {
+        let _ = self.sender.send(PlasticityMessage::Batch(events));
     }
 
     pub fn decay_long_term(&self) {
