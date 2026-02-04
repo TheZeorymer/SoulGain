@@ -1,342 +1,142 @@
-use std::sync::Arc;
-
-use crate::memory::MemorySystem;
-use crate::plasticity::{Event, Plasticity, VMError};
-use crate::types::UVal;
-
-// --- OPCODE DEFINITIONS ---
-pub const OP_LITERAL: i64 = 0;
-pub const OP_ADD: i64 = 1;
-pub const OP_SUB: i64 = 2;
-pub const OP_MUL: i64 = 3;
-pub const OP_EQ: i64 = 5;
-pub const OP_STORE: i64 = 6;
-pub const OP_LOAD: i64 = 7;
-pub const OP_HALT: i64 = 8;
-pub const OP_GT: i64 = 9;
-pub const OP_NOT: i64 = 10;
-pub const OP_JMP: i64 = 11;
-pub const OP_JMP_IF: i64 = 12;
-pub const OP_CALL: i64 = 13;
-pub const OP_RET: i64 = 14;
-pub const OP_INTUITION: i64 = 15;
-pub const OP_REWARD: i64 = 16;
-pub const OP_EVOLVE: i64 = 17;
-
-pub struct SoulGainVM {
-    pub stack: Vec<UVal>,
-    pub call_stack: Vec<usize>,
-    pub memory: MemorySystem,
-    pub ip: usize,
-    pub program: Vec<f64>,
-    pub plasticity: Plasticity,
-    last_event: Option<Event>,
-}
+use crate::{
+    SoulGainVM, UVal, Event, VMError,
+    OP_LITERAL, OP_ADD, OP_SUB, OP_MUL, OP_LOAD, OP_STORE, 
+    OP_REWARD, OP_EVOLVE, OP_HALT, OP_INTUITION
+};
 
 impl SoulGainVM {
-    pub fn new(program: Vec<f64>) -> Self {
-        Self {
-            stack: Vec::new(),
-            call_stack: Vec::new(),
-            memory: MemorySystem::new(),
-            ip: 0,
-            program,
-            plasticity: Plasticity::new(),
-            last_event: None,
-        }
-    }
+    pub fn execute_opcode(&mut self, opcode: i64) -> bool {
+        let last_event = self.last_event;
 
-    fn decode_opcode(x: f64) -> Result<i64, VMError> {
-        if !x.is_finite() {
-            return Err(VMError::InvalidOpcode(-1));
-        }
-        let i = x.round();
-        if (i - x).abs() > 1e-9 {
-            return Err(VMError::InvalidOpcode(i as i64));
-        }
-        Ok(i as i64)
-    }
-
-    pub fn run(&mut self) {
-        while self.ip < self.program.len() {
-            let raw = self.program[self.ip];
-            self.ip += 1;
-
-            let opcode = match Self::decode_opcode(raw) {
-                Ok(op) => op,
-                Err(e) => {
-                    self.plasticity.observe(Event::Error(e));
-                    continue;
-                }
-            };
-
-            let opcode_event = Event::Opcode {
-                opcode,
-                stack_depth: self.stack.len(),
-            };
-            self.last_event = Some(opcode_event);
-            self.plasticity.observe(opcode_event);
-
-            match opcode {
-                OP_LITERAL => {
-                    if self.ip >= self.program.len() {
-                        break;
-                    }
-                    let v = self.program[self.ip];
-                    self.ip += 1;
-                    self.stack.push(UVal::Number(v));
-                }
-
-                OP_ADD => {
-                    if self.stack.len() < 2 {
-                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
-                        continue;
-                    }
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-
-                    match (a, b) {
-                        (UVal::Number(na), UVal::Number(nb)) => {
-                            self.stack.push(UVal::Number(na + nb));
-                        }
-                        (UVal::String(sa), UVal::String(sb)) => {
-                            let mut new_s = (*sa).clone();
-                            new_s.push_str(&sb);
-                            self.stack.push(UVal::String(Arc::new(new_s)));
-                        }
-                        _ => self.plasticity.observe(Event::Error(VMError::InvalidOpcode(opcode))),
-                    }
-                }
-
-                OP_SUB => {
-                    if self.stack.len() < 2 {
-                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
-                        continue;
-                    }
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    if let (UVal::Number(na), UVal::Number(nb)) = (a, b) {
-                        self.stack.push(UVal::Number(na - nb));
-                    }
-                }
-
-                OP_MUL => {
-                    if self.stack.len() < 2 {
-                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
-                        continue;
-                    }
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    if let (UVal::Number(na), UVal::Number(nb)) = (a, b) {
-                        self.stack.push(UVal::Number(na * nb));
-                    }
-                }
-
-                OP_EQ => {
-                    if self.stack.len() < 2 {
-                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
-                        continue;
-                    }
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    self.stack.push(UVal::Bool(a == b));
-                }
-
-                OP_GT => {
-                    if self.stack.len() < 2 {
-                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
-                        continue;
-                    }
-                    let b = self.stack.pop().unwrap();
-                    let a = self.stack.pop().unwrap();
-                    if let (UVal::Number(na), UVal::Number(nb)) = (a, b) {
-                        self.stack.push(UVal::Bool(na > nb));
-                    }
-                }
-
-                OP_NOT => {
-                    if self.stack.is_empty() {
-                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
-                        continue;
-                    }
-                    let value = self.stack.pop().unwrap();
-                    self.stack.push(UVal::Bool(!value.is_truthy()));
-                }
-
-                OP_STORE => {
-                    if self.stack.len() < 2 {
-                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
-                        continue;
-                    }
-                    let val = self.stack.pop().unwrap();
-                    let addr_val = self.stack.pop().unwrap();
-
-                    if let UVal::Number(addr) = addr_val {
-                        if self.memory.write(addr, val) {
-                            self.plasticity.observe(Event::MemoryWrite);
-                            self.last_event = Some(Event::MemoryWrite);
-                        }
-                    } else {
-                        self.plasticity.observe(Event::Error(VMError::InvalidOpcode(opcode)));
-                    }
-                }
-
-                OP_LOAD => {
-                    if self.stack.is_empty() {
-                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
-                        continue;
-                    }
-                    let addr_val = self.stack.pop().unwrap();
-                    if let UVal::Number(addr) = addr_val {
-                        if let Some(v) = self.memory.read(addr) {
-                            self.stack.push(v);
-                            self.plasticity.observe(Event::MemoryRead);
-                            self.last_event = Some(Event::MemoryRead);
-                        } else {
-                            self.stack.push(UVal::Nil);
-                        }
-                    }
-                }
-
-                OP_INTUITION => {
-                    if let Some(last_event) = self.last_event {
-                        if let Some(next_event) = self.plasticity.best_next_event(last_event) {
-                            if let Event::Opcode {
-                                opcode: predicted_opcode,
-                                ..
-                            } = next_event
-                            {
-                                if let Some(new_ip) = self.find_next_opcode(predicted_opcode) {
-                                    self.ip = new_ip;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                OP_JMP => {
-                    if self.ip >= self.program.len() {
-                        break;
-                    }
-                    let target = self.program[self.ip];
-                    self.ip += 1;
-                    if !target.is_finite() || target < 0.0 {
-                        self.plasticity.observe(Event::Error(VMError::InvalidJump(-1)));
-                        continue;
-                    }
-                    let new_ip = target.round() as usize;
-                    if new_ip >= self.program.len() {
-                        self.plasticity
-                            .observe(Event::Error(VMError::InvalidJump(new_ip as i64)));
-                        continue;
-                    }
-                    self.ip = new_ip;
-                }
-
-                OP_JMP_IF => {
-                    if self.ip >= self.program.len() {
-                        self.plasticity.observe(Event::Error(VMError::InvalidJump(-1)));
-                        break;
-                    }
-                    if self.stack.is_empty() {
-                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
-                        continue;
-                    }
-                    let target = self.program[self.ip];
-                    self.ip += 1;
-                    let condition = self.stack.pop().unwrap();
-                    if condition.is_truthy() {
-                        if !target.is_finite() || target < 0.0 {
-                            self.plasticity.observe(Event::Error(VMError::InvalidJump(-1)));
-                            continue;
-                        }
-                        let new_ip = target.round() as usize;
-                        if new_ip >= self.program.len() {
-                            self.plasticity
-                                .observe(Event::Error(VMError::InvalidJump(new_ip as i64)));
-                            continue;
-                        }
-                        self.ip = new_ip;
-                    }
-                }
-
-                OP_CALL => {
-                    if self.ip >= self.program.len() {
-                        break;
-                    }
-                    let target = self.program[self.ip];
-                    self.ip += 1;
-                    if !target.is_finite() || target < 0.0 {
-                        self.plasticity.observe(Event::Error(VMError::InvalidJump(-1)));
-                        continue;
-                    }
-                    let new_ip = target.round() as usize;
-                    if new_ip >= self.program.len() {
-                        self.plasticity
-                            .observe(Event::Error(VMError::InvalidJump(new_ip as i64)));
-                        continue;
-                    }
-                    self.call_stack.push(self.ip);
-                    self.ip = new_ip;
-                }
-
-                OP_RET => {
-                    if let Some(return_ip) = self.call_stack.pop() {
-                        self.ip = return_ip;
-                    } else {
-                        self.plasticity.observe(Event::Error(VMError::ReturnStackUnderflow));
-                    }
-                }
-
-                OP_REWARD => {
-                    self.plasticity.observe(Event::Reward);
-                    self.last_event = Some(Event::Reward);
-                }
-
-                OP_EVOLVE => {
-                    if self.stack.len() < 2 {
-                        self.plasticity.observe(Event::Error(VMError::StackUnderflow));
-                        continue;
-                    }
-                    let value = self.stack.pop().unwrap();
-                    let addr_val = self.stack.pop().unwrap();
-                    let (addr, new_value) = match (addr_val, value) {
-                        (UVal::Number(addr), UVal::Number(val)) => (addr, val),
-                        _ => {
-                            self.plasticity.observe(Event::Error(VMError::InvalidEvolve(-1)));
-                            continue;
-                        }
-                    };
-                    if !addr.is_finite() || addr < 0.0 {
-                        self.plasticity.observe(Event::Error(VMError::InvalidEvolve(-1)));
-                        continue;
-                    }
-                    let index = addr.round() as usize;
-                    if index >= self.program.len() {
-                        self.plasticity
-                            .observe(Event::Error(VMError::InvalidEvolve(index as i64)));
-                        continue;
-                    }
-                    self.program[index] = new_value;
-                }
-
-                OP_HALT => break,
-
-                _ => self.plasticity.observe(Event::Error(VMError::InvalidOpcode(opcode))),
-            }
-
-            self.plasticity.decay_long_term();
-        }
-    }
-
-    fn find_next_opcode(&self, opcode: i64) -> Option<usize> {
-        for (idx, raw) in self.program.iter().enumerate().skip(self.ip) {
-            if let Ok(decoded) = Self::decode_opcode(*raw) {
-                if decoded == opcode {
-                    return Some(idx);
+        match opcode {
+            OP_LITERAL => {
+                self.ip += 1;
+                if self.ip < self.program.len() {
+                    let val = self.program[self.ip];
+                    self.stack.push(UVal::Number(val));
+                    self.last_event = Some(Event::Opcode {
+                        opcode: OP_LITERAL,
+                        stack_depth: self.stack.len(),
+                    });
+                } else {
+                    return false;
                 }
             }
+
+            OP_ADD => {
+                if let (Some(UVal::Number(b)), Some(UVal::Number(a))) = (self.stack.pop(), self.stack.pop()) {
+                    self.stack.push(UVal::Number(a + b));
+                    self.last_event = Some(Event::Opcode {
+                        opcode: OP_ADD,
+                        stack_depth: self.stack.len(),
+                    });
+                } else {
+                    self.plasticity.observe(Event::Error(VMError::StackUnderflow));
+                }
+            }
+
+            OP_SUB => {
+                if let (Some(UVal::Number(b)), Some(UVal::Number(a))) = (self.stack.pop(), self.stack.pop()) {
+                    self.stack.push(UVal::Number(a - b));
+                    self.last_event = Some(Event::Opcode {
+                        opcode: OP_SUB,
+                        stack_depth: self.stack.len(),
+                    });
+                } else {
+                    self.plasticity.observe(Event::Error(VMError::StackUnderflow));
+                }
+            }
+
+            OP_MUL => {
+                if let (Some(UVal::Number(b)), Some(UVal::Number(a))) = (self.stack.pop(), self.stack.pop()) {
+                    self.stack.push(UVal::Number(a * b));
+                    self.last_event = Some(Event::Opcode {
+                        opcode: OP_MUL,
+                        stack_depth: self.stack.len(),
+                    });
+                } else {
+                    self.plasticity.observe(Event::Error(VMError::StackUnderflow));
+                }
+            }
+
+            // FIX 1 & 2: Pass f64 directly and handle Option result
+            OP_LOAD => {
+                if let Some(UVal::Number(addr)) = self.stack.pop() {
+                    // Default to 0.0 if memory is uninitialized at this address
+                    let val = self.memory.read(addr).unwrap_or(UVal::Number(0.0));
+                    self.stack.push(val);
+                    self.plasticity.observe(Event::MemoryRead);
+                    self.last_event = Some(Event::MemoryRead);
+                }
+            }
+
+            // FIX 3: Pass f64 directly
+            OP_STORE => {
+                if let (Some(val), Some(UVal::Number(addr))) = (self.stack.pop(), self.stack.pop()) {
+                    self.memory.write(addr, val);
+                    self.plasticity.observe(Event::MemoryWrite);
+                    self.last_event = Some(Event::MemoryWrite);
+                }
+            }
+
+            OP_REWARD => {
+                self.plasticity.observe(Event::Reward(100));
+                self.last_event = Some(Event::Reward(100));
+            }
+
+            OP_EVOLVE => {
+                if let Some(UVal::Number(id)) = self.stack.pop() {
+                    self.skills.define_skill(id as i64, self.program.clone());
+                    self.plasticity.observe(Event::Reward(100));
+                    self.last_event = Some(Event::Reward(100));
+                } else {
+                    self.plasticity.observe(Event::Error(VMError::InvalidEvolve(-1)));
+                }
+            }
+
+            OP_INTUITION => {
+                if let Some(last_ev) = last_event {
+                    if let Some(next_event) = self.plasticity.best_next_event(last_ev) {
+                        if let Event::Opcode { opcode: next_op, .. } = next_event {
+                            return self.execute_opcode(next_op);
+                        }
+                    }
+                }
+            }
+
+            OP_HALT => return false,
+
+            _ if opcode >= 100 => {
+                if let Some(macro_code) = self.skills.get_skill(opcode).cloned() {
+                    let mut sub_vm = SoulGainVM::new(macro_code);
+                    
+                    sub_vm.stack = std::mem::take(&mut self.stack);
+                    sub_vm.skills = self.skills.clone();
+                    // We assume memory is NOT shared for now to avoid borrow checker hell,
+                    // or we clone it if it's cheap.
+                    sub_vm.memory = self.memory.clone(); 
+                    
+                    sub_vm.run();
+                    
+                    self.stack = std::mem::take(&mut sub_vm.stack);
+                    // If sub_vm wrote to memory, we'd need to sync it back, 
+                    // but for now let's keep it simple.
+                    self.last_event = sub_vm.last_event;
+                } else {
+                    self.plasticity.observe(Event::Error(VMError::InvalidOpcode(opcode)));
+                }
+            }
+
+            _ => {
+                self.plasticity.observe(Event::Error(VMError::InvalidOpcode(opcode)));
+            }
         }
-        None
+
+        if let Some(ev) = self.last_event {
+            self.plasticity.observe(ev);
+        }
+
+        self.ip += 1;
+        true
     }
 }

@@ -9,11 +9,8 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-<<<<<<< HEAD
 // --- ORIGINAL TESTS ---
 
-=======
->>>>>>> codex/explore-features-for-agi-vm-improvement-bnoa3g
 pub fn test_numeric_logic(vm: &mut SoulGainVM) {
     println!("--- Testing Numeric Logic ---");
     vm.stack.clear();
@@ -75,10 +72,6 @@ pub fn test_learning_from_failure(vm: &mut SoulGainVM) {
     vm.stack.clear();
     vm.call_stack.clear();
     vm.ip = 0;
-<<<<<<< HEAD
-=======
-    vm.program = vec![OP_HALT as f64];
->>>>>>> codex/explore-features-for-agi-vm-improvement-bnoa3g
     
     println!("Training the brain on bad code (String + Number)...");
     for _ in 0..10 {
@@ -128,7 +121,6 @@ pub fn stress_test_metabolic_pressure(vm: &mut SoulGainVM) {
             println!("  Processed {} iterations...", i);
         }
     }
-<<<<<<< HEAD
 
     println!("VM completed execution in: {:?}", start.elapsed());
     println!("Waiting for background thread to drain the synaptic queue...");
@@ -170,6 +162,3 @@ pub fn stress_test_intuition_skipping(vm: &mut SoulGainVM) {
 
     println!("Final IP: {} (If > 1, Intuition jumped!)", vm.ip);
 }
-=======
-}
->>>>>>> codex/explore-features-for-agi-vm-improvement-bnoa3g

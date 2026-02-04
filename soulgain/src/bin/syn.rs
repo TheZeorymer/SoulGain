@@ -1,147 +1,64 @@
 use std::time::Instant;
-
 use soulgain::evolution::{Oracle, Trainer};
 use soulgain::types::UVal;
 use soulgain::SoulGainVM;
 
-struct AddOracle;
-struct SubOracle;
-struct DeepAddOracle;
-struct StoryOracle;
-
-impl Oracle for AddOracle {
+struct SumOracle { target_count: usize }
+impl Oracle for SumOracle {
     fn evaluate(&self, input: Vec<UVal>) -> Vec<UVal> {
-        let sum = numbers_from(input).iter().sum::<f64>();
+        let sum = input.iter().take(self.target_count).filter_map(|v| if let UVal::Number(n) = v { Some(*n) } else { None }).sum::<f64>();
         vec![UVal::Number(sum)]
     }
-}
-
-impl Oracle for SubOracle {
-    fn evaluate(&self, input: Vec<UVal>) -> Vec<UVal> {
-        let mut nums = numbers_from(input);
-        let first = nums.get(0).copied().unwrap_or(0.0);
-        let rest = nums.iter().skip(1).sum::<f64>();
-        vec![UVal::Number(first - rest)]
-    }
-}
-
-impl Oracle for DeepAddOracle {
-    fn evaluate(&self, input: Vec<UVal>) -> Vec<UVal> {
-        let sum = numbers_from(input).iter().sum::<f64>();
-        vec![UVal::Number(sum)]
-    }
-}
-
-impl Oracle for StoryOracle {
-    fn evaluate(&self, input: Vec<UVal>) -> Vec<UVal> {
-        let nums = numbers_from(input);
-        let result = nums.get(0).copied().unwrap_or(0.0)
-            - nums.get(1).copied().unwrap_or(0.0)
-            + nums.get(2).copied().unwrap_or(0.0);
-        vec![UVal::Number(result)]
-    }
-}
-struct MulAddOracle;
-
-impl Oracle for MulAddOracle {
-    fn evaluate(&self, input: Vec<UVal>) -> Vec<UVal> {
-        let nums = numbers_from(input);
-        let a = nums.get(0).copied().unwrap_or(0.0);
-        let b = nums.get(1).copied().unwrap_or(0.0);
-        let c = nums.get(2).copied().unwrap_or(0.0);
-        vec![UVal::Number(a * b + c)]
-    }
-}
-
-struct Task {
-    name: &'static str,
-    input: Vec<UVal>,
-    oracle: Box<dyn Oracle>,
-    max_program_len: usize,
-    attempts: usize,
 }
 
 fn main() {
-    let tasks = vec![
-        Task {
-            name: "addition",
-            input: vec![UVal::Number(5.0), UVal::Number(10.0)],
-            oracle: Box::new(AddOracle),
-            max_program_len: 3,
-            attempts: 500,
-        },
-        Task {
-            name: "subtraction",
-            input: vec![UVal::Number(20.0), UVal::Number(7.0)],
-            oracle: Box::new(SubOracle),
-            max_program_len: 3,
-            attempts: 500,
-        },
-        Task {
-            name: "deep addition",
-            input: vec![
-                UVal::Number(1.0),
-                UVal::Number(2.0),
-                UVal::Number(3.0),
-                UVal::Number(4.0),
-                UVal::Number(5.0),
-            ],
-            oracle: Box::new(DeepAddOracle),
-            max_program_len: 6,
-            attempts: 1000,
-        },
-        Task {
-            name: "story: 50 spend 30 get 60",
-            input: vec![UVal::Number(50.0), UVal::Number(30.0), UVal::Number(40.0)],
-            oracle: Box::new(StoryOracle),
-            max_program_len: 4,
-            attempts: 800,
-        },
+    let mut vm = SoulGainVM::new(vec![]);
+
+    // --- 1. BOOT ENGINE ---
+    if let Ok(file) = std::fs::File::open("skills.json") {
+        if let Ok(saved_skills) = serde_json::from_reader(file) {
+            vm.skills = saved_skills;
+            println!("[System] Skills Restored. Count: {}", vm.skills.macros.len());
+        }
+    }
     
-    Task {
-    name: "weighted sum: (a * b) + c",
-    input: vec![
-        UVal::Number(4.0),
-        UVal::Number(5.0),
-        UVal::Number(6.0),
-    ],
-    oracle: Box::new(MulAddOracle),
-    max_program_len: 4,
-    attempts: 1500,
-},
+    if std::path::Path::new("plasticity.json").exists() {
+        let _ = vm.plasticity.load_from_file("plasticity.json");
+        println!("[System] Intuition Restored.");
+    }
+
+    let mut trainer = Trainer::new(vm, 10);
+    let master_input = (1..=20).map(|i| UVal::Number(i as f64)).collect::<Vec<_>>();
+
+    // --- 2. STARTING FROM THE BOTTOM ---
+    let levels = vec![
+        (2, "Level -1: Sum 2 (The Absolute Base)"),
+        (5, "Level 0: Sum 5 (Verification)"),
+        (7, "Level 1: Sum 7 (Extension)"),
     ];
 
-
-    println!("STDP-guided synthesis benchmark (first run vs learned run)");
-
-    for task in tasks {
-        let mut trainer = Trainer::new(SoulGainVM::new(vec![]), task.max_program_len);
-
-        let start = Instant::now();
-        let first = trainer.synthesize(task.oracle.as_ref(), task.input.clone(), task.attempts);
-        let first_elapsed = start.elapsed();
+    for (count, title) in levels {
+        println!("\n--- {} ---", title);
+        let oracle = SumOracle { target_count: count };
+        let input = master_input[0..count].to_vec();
 
         let start = Instant::now();
-        let second = trainer.synthesize(task.oracle.as_ref(), task.input.clone(), task.attempts);
-        let second_elapsed = start.elapsed();
+        // We set attempts high so it really explores the search space
+        let result = trainer.synthesize(&oracle, input, 3000);
+        
+        if let Some(prog) = result {
+            println!("  Found in: {:?}", start.elapsed());
+            println!("  Logic Used: {:?}", prog);
+        } else {
+            println!("  [System] Stalled at {}. Logic too complex for current weights.", title);
+            break;
+        }
 
-        println!(
-            "\nTask: {}\n  First run: {:?} (program found: {})\n  Learned run: {:?} (program found: {})",
-            task.name,
-            first_elapsed,
-            first.is_some(),
-            second_elapsed,
-            second.is_some()
-        );
+        // Save progress immediately
+        let file = std::fs::File::create("skills.json").unwrap();
+        serde_json::to_writer_pretty(file, &trainer.vm.skills).unwrap();
+        let _ = trainer.vm.plasticity.save_to_file("plasticity.json");
     }
-}
 
-fn numbers_from(input: Vec<UVal>) -> Vec<f64> {
-    input
-        .into_iter()
-        .filter_map(|val| match val {
-            UVal::Number(n) => Some(n),
-            _ => None,
-        })
-        .collect()
+    println!("\n[System] Benchmark Cycle Complete.");
 }

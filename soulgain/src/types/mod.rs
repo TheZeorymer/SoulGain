@@ -1,4 +1,5 @@
 pub mod value;
+pub mod skills; // Add this line
 
-// Re-export UVal for cleaner imports elsewhere
 pub use value::UVal;
+pub use skills::SkillLibrary; // Add this line

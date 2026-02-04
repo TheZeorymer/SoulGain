@@ -1,0 +1,167 @@
+[
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.19999363510179952
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Reward": 100
+    },
+    "weight": 1.4856000434287475
+  },
+  {
+    "from": {
+      "Reward": 100
+    },
+    "to": {
+      "Reward": 100
+    },
+    "weight": 0.49996567617817866
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.19986859373036975
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Reward": 100
+    },
+    "weight": 1.4855539072191175
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Reward": 100
+    },
+    "weight": 1.4846609134646471
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 2
+      }
+    },
+    "weight": 0.19987495461661023
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8177,
+        "stack_depth": 2
+      }
+    },
+    "weight": 10.0
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.2398423124764437
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 2
+      }
+    },
+    "weight": -0.2399923621221594
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.23984994553993233
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 2
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7660,
+        "stack_depth": 2
+      }
+    },
+    "weight": 10.0
+  }
+]
