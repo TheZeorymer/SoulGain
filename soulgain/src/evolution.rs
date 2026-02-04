@@ -4,7 +4,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use crate::plasticity::Event;
 use crate::types::UVal;
-use crate::{SoulGainVM, OP_HALT, OP_LITERAL, OP_ADD, OP_SUB, OP_MUL};
+use crate::{Op, SoulGainVM, SKILL_OPCODE_BASE};
 
 pub trait Oracle {
     fn evaluate(&self, input: Vec<UVal>) -> Vec<UVal>;
@@ -40,83 +40,155 @@ impl Trainer {
         let mut best_program: Option<Vec<f64>> = None;
         let mut best_fitness = 0.0;
         let input_preamble_len = input.len() * 2; 
-        
-        // SMART START: Don't try 1 op for 5 numbers.
-        // We need at least (inputs - 1) operations to reduce them to a single sum.
-        let min_ops = input.len().saturating_sub(1).max(1);
+        let mut current_len = 1usize;
+        let mut stagnation_counter = 0usize;
+        let mut total_attempts = 0usize;
+        let mut force_hyper_mutation = false;
+        let mut hyper_mutation_used = false;
+        let mut mutate_boost_remaining = 0usize;
+        let mut invent_penalty_remaining = 0usize;
+        let mut invent_zero_streak = 0usize;
+        let stagnation_threshold = (attempts_limit / 10).max(25);
 
         let _ = std::fs::File::create("text.txt");
 
-        let mut attempt = 0;
-        while attempt < attempts_limit {
+        while total_attempts < attempts_limit {
+            total_attempts += 1;
             let r = self.rng.r#gen::<f64>();
 
-            // RANDOMIZED DEPTH: Don't get stuck on length 1. 
-            // Pick a length between min_ops and max_len every time.
-            let current_len = self.rng.gen_range(min_ops..=self.max_program_len);
+            if stagnation_counter > stagnation_threshold {
+                if current_len < self.max_program_len {
+                    current_len += 1;
+                    stagnation_counter = 0;
+                    force_hyper_mutation = false;
+                } else if !hyper_mutation_used && stagnation_counter > stagnation_threshold * 2 {
+                    force_hyper_mutation = true;
+                    hyper_mutation_used = true;
+                    stagnation_counter = 0;
+                } else if stagnation_counter > stagnation_threshold * 3 {
+                    break;
+                }
+            }
 
-            let try_invention = best_fitness < 0.1 && r < 0.5;
-            let try_speculation = !try_invention && best_fitness > 0.0 && r < 0.2;
-            let try_mutation = !try_invention && !try_speculation && best_fitness > 0.0;
+            let mut invent_prob = 0.35;
+            let mut spec_prob = 0.15;
+            let mut mutate_prob = 0.25;
+            if mutate_boost_remaining > 0 {
+                mutate_prob += 0.2;
+            }
+            if invent_penalty_remaining > 0 {
+                invent_prob *= 0.5;
+            }
+            let total_prob = invent_prob + spec_prob + mutate_prob;
+            let random_prob = (1.0 - total_prob).max(0.0);
+            let roll = r * (invent_prob + spec_prob + mutate_prob + random_prob);
 
-            let (current_program, logic_start, tag) = if try_invention {
-                // Generate a skill that fits the current random length
+            let mut strategy = "RANDOM";
+            let mut threshold = invent_prob;
+            if roll < threshold {
+                strategy = "INVENT";
+            } else {
+                threshold += spec_prob;
+                if roll < threshold {
+                    strategy = "SPEC";
+                } else {
+                    threshold += mutate_prob;
+                    if roll < threshold {
+                        strategy = "MUTATE";
+                    }
+                }
+            }
+
+            let (current_program, logic_start, strategy) = if force_hyper_mutation {
+                let mut variant = best_program.clone().unwrap_or_else(|| {
+                    let (_, _) = self.build_program(&input, current_len, true);
+                    self.program_buf.clone()
+                });
+                self.hyper_mutate_program(&mut variant, input_preamble_len);
+                force_hyper_mutation = false;
+                (variant, input_preamble_len, "MUTATE")
+            } else if strategy == "INVENT" {
                 let id = self.generate_smart_skill_logic(current_len);
-                let (_ev, start) = self.build_program(&input, 1);
+                let (_ev, start) = self.build_program(&input, 1, false);
                 let mut p = self.program_buf.clone();
                 if p.len() > start {
                     let last_idx = p.len() - 2; 
                     p[last_idx] = id as f64;
                 }
-                (p, start, format!("INVENT_{}", id))
-            } else if try_speculation {
+                (p, start, "INVENT")
+            } else if strategy == "SPEC" {
                 let mut variant = best_program.clone().unwrap_or_else(|| {
-                     let (_, _) = self.build_program(&input, current_len);
-                     self.program_buf.clone()
+                    let (_, _) = self.build_program(&input, current_len, true);
+                    self.program_buf.clone()
                 });
-                let id = self.speculate_new_skill(&mut variant, input_preamble_len);
-                (variant, input_preamble_len, format!("SPEC_{:?}", id))
-            } else if try_mutation {
+                let _id = self.speculate_new_skill(&mut variant, input_preamble_len);
+                (variant, input_preamble_len, "SPEC")
+            } else if strategy == "MUTATE" && best_program.is_some() {
                 let mut variant = best_program.clone().unwrap();
                 self.mutate_program(&mut variant, input_preamble_len);
-                (variant, input_preamble_len, "MUTATE".to_string())
+                (variant, input_preamble_len, "MUTATE")
             } else {
-                let (_last_event, start) = self.build_program(&input, current_len);
-                (self.program_buf.clone(), start, "RANDOM".to_string())
+                let (_last_event, start) = self.build_program(&input, current_len, true);
+                (self.program_buf.clone(), start, "RANDOM")
             };
 
             let logic_bits: Vec<u64> = current_program[logic_start..].iter().map(|f| f.to_bits()).collect();
             if failed_attempts.contains(&logic_bits) { continue; }
             failed_attempts.insert(logic_bits);
-            attempt += 1;
 
             let mut exec_buf = current_program.clone();
             let result = self.execute_program(&mut exec_buf);
             let fitness = self.calculate_fitness(&result, &expected);
 
-            self.log_logic(&tag, &current_program[logic_start..], fitness);
+            self.log_logic(current_len, total_attempts, strategy, &current_program[logic_start..], fitness);
 
             if fitness > best_fitness {
                 best_fitness = fitness;
                 best_program = Some(current_program.clone());
+                stagnation_counter = 0;
+                invent_zero_streak = 0;
+                if strategy == "MUTATE" {
+                    mutate_boost_remaining = 100;
+                }
                 if fitness > 0.1 {
                     self.vm.plasticity.observe(Event::Reward((fitness * 100.0) as u8));
                 }
+            } else {
+                stagnation_counter += 1;
+                if strategy == "INVENT" && fitness == 0.0 {
+                    invent_zero_streak += 1;
+                    if invent_zero_streak >= 5 {
+                        invent_penalty_remaining = 100;
+                        invent_zero_streak = 0;
+                    }
+                }
+            }
+
+            if mutate_boost_remaining > 0 {
+                mutate_boost_remaining -= 1;
+            }
+            if invent_penalty_remaining > 0 {
+                invent_penalty_remaining -= 1;
             }
 
             if fitness >= 0.9999 { 
                 let logic_slice = current_program[logic_start..].to_vec();
                 let mut clean_logic = logic_slice;
-                if clean_logic.last() == Some(&(OP_HALT as f64)) { clean_logic.pop(); }
+                if clean_logic.last() == Some(&Op::Halt.as_f64()) {
+                    clean_logic.pop();
+                }
 
                 if !clean_logic.is_empty() {
                     let skill_id = self.register_or_find_skill(clean_logic);
                     println!("  [SUCCESS] Concept: Opcode {} | Len: {}", skill_id, current_len);
                     self.imprint_skill(skill_id, &input);
+                    stagnation_counter = 0;
+                    hyper_mutation_used = false;
+                    current_len = 1;
                     
                     let mut optimized = current_program[..logic_start].to_vec();
                     optimized.push(skill_id as f64);
-                    optimized.push(OP_HALT as f64);
+                    optimized.push(Op::Halt.as_f64());
                     return Some(optimized);
                 }
                 return Some(current_program); 
@@ -138,29 +210,31 @@ impl Trainer {
         let mut logic = Vec::new();
         // Force the skill to be exactly the random length we picked
         for _ in 0..target_len {
-            let op = if !self.vm.skills.macros.is_empty() && self.rng.gen_bool(0.3) {
-                let keys: Vec<_> = self.vm.skills.macros.keys().cloned().collect();
-                keys[self.rng.gen_range(0..keys.len())]
-            } else {
-                let basic = [OP_ADD, OP_SUB, OP_MUL];
-                basic[self.rng.gen_range(0..basic.len())]
-            };
+            let op = self.choose_random_op_with_bias();
             logic.push(op as f64);
         }
         self.register_or_find_skill(logic)
     }
 
-    fn log_logic(&self, tag: &str, logic: &[f64], fitness: f64) {
+    fn log_logic(&self, depth: usize, level: usize, strategy: &str, logic: &[f64], fitness: f64) {
         let decoded: Vec<String> = logic.iter().map(|&op| {
-            if op == OP_ADD as f64 { "ADD".into() }
-            else if op == OP_SUB as f64 { "SUB".into() }
-            else if op == OP_MUL as f64 { "MUL".into() }
-            else if op == OP_HALT as f64 { "HALT".into() } // FIXED LOG LABEL
-            else if op >= 1000.0 { format!("OP_{}", op as i64) }
+            if op == Op::Add.as_f64() { "ADD".into() }
+            else if op == Op::Sub.as_f64() { "SUB".into() }
+            else if op == Op::Mul.as_f64() { "MUL".into() }
+            else if op == Op::Halt.as_f64() { "HALT".into() }
+            else if op >= SKILL_OPCODE_BASE as f64 { format!("OP_{}", op as i64) }
             else { format!("LIT({})", op) }
         }).collect();
         let mut file = OpenOptions::new().create(true).append(true).open("text.txt").unwrap();
-        writeln!(file, "[{}] Fit: {:.4} | Logic: {:?}", tag, fitness, decoded).unwrap();
+        writeln!(
+            file,
+            "[{}/{}] [Strategy: {}] Fit: {:.4} | Logic: {:?}",
+            depth,
+            level,
+            strategy,
+            fitness,
+            decoded
+        ).unwrap();
     }
 
     // [KEEP HELPERS: speculate_new_skill, mutate_program, build_program, choose_op_with_stdp, imprint_skill, generate_random_id, calculate_fitness, execute_program]
@@ -185,44 +259,67 @@ impl Trainer {
         let mutable_range = logic_start..program.len().saturating_sub(1);
         if mutable_range.is_empty() { return; }
         let idx = self.rng.gen_range(mutable_range);
-        let mut ops: Vec<i64> = vec![OP_ADD, OP_SUB, OP_MUL];
-        for &custom_op in self.vm.skills.macros.keys() { ops.push(custom_op); }
-        program[idx] = ops[self.rng.gen_range(0..ops.len())] as f64;
+        if self.rng.gen_bool(0.5) && program.len() > logic_start + 2 {
+            let swap_idx = self.rng.gen_range(mutable_range.clone());
+            program.swap(idx, swap_idx);
+        } else {
+            let op = self.choose_random_op_with_bias();
+            program[idx] = op as f64;
+        }
     }
 
-    fn build_program(&mut self, input: &[UVal], target_len: usize) -> (Event, usize) {
+    fn hyper_mutate_program(&mut self, program: &mut Vec<f64>, logic_start: usize) {
+        if program.len() <= logic_start + 1 {
+            return;
+        }
+        for idx in logic_start..program.len().saturating_sub(1) {
+            let op = self.choose_random_op_with_bias();
+            program[idx] = op as f64;
+        }
+    }
+
+    fn build_program(&mut self, input: &[UVal], target_len: usize, random_bias: bool) -> (Event, usize) {
         self.program_buf.clear();
         let mut stack_depth = 0usize;
         for value in input {
             if let UVal::Number(n) = value {
-                self.program_buf.push(OP_LITERAL as f64);
+                self.program_buf.push(Op::Literal.as_f64());
                 self.program_buf.push(*n);
                 stack_depth += 1;
             }
         }
         let logic_start = self.program_buf.len();
-        let mut last_event = Event::Opcode { opcode: OP_LITERAL, stack_depth };
+        let mut last_event = Event::Opcode { opcode: Op::Literal.as_i64(), stack_depth };
         for _ in 0..target_len {
-            let op = self.choose_op_with_stdp(last_event, stack_depth);
+            let op = if random_bias {
+                self.choose_random_op_with_bias()
+            } else {
+                self.choose_op_with_stdp(last_event, stack_depth)
+            };
             self.program_buf.push(op as f64);
             // Rough stack tracking
-            stack_depth = if op == OP_LITERAL as i64 { stack_depth + 1 } else { stack_depth.saturating_sub(1) };
+            stack_depth = if op == Op::Literal.as_i64() { stack_depth + 1 } else { stack_depth.saturating_sub(1) };
             last_event = Event::Opcode { opcode: op, stack_depth };
         }
-        self.program_buf.push(OP_HALT as f64);
+        self.program_buf.push(Op::Halt.as_f64());
         (last_event, logic_start)
     }
 
     fn choose_op_with_stdp(&mut self, last_event: Event, stack_depth: usize) -> i64 {
-        let mut ops: Vec<i64> = vec![OP_ADD, OP_SUB, OP_MUL];
+        let mut ops: Vec<i64> = vec![Op::Add.as_i64(), Op::Sub.as_i64(), Op::Mul.as_i64()];
         for &custom_op in self.vm.skills.macros.keys() { ops.push(custom_op); }
         if let Ok(mem) = self.vm.plasticity.memory.read() {
             let mut best_op = ops[0];
             let mut best_weight = f64::MIN;
             for &op in &ops {
                 let target = Event::Opcode { opcode: op, stack_depth };
-                let mut weight = mem.weights.get(&(last_event, target)).copied().unwrap_or(0.0);
-                if op >= 1000 { weight += 2.5; } 
+                let mut weight = mem
+                    .weights
+                    .get(&last_event)
+                    .and_then(|outgoing| outgoing.get(&target))
+                    .copied()
+                    .unwrap_or(0.0);
+                if op >= SKILL_OPCODE_BASE { weight += 2.5; } 
                 if weight > best_weight { best_weight = weight; best_op = op; }
             }
             if best_weight >= 9.0 { return best_op; }
@@ -231,11 +328,25 @@ impl Trainer {
         ops[0]
     }
 
+    fn choose_random_op_with_bias(&mut self) -> i64 {
+        if !self.vm.skills.macros.is_empty() && self.rng.gen_bool(0.3) {
+            let keys: Vec<_> = self.vm.skills.macros.keys().cloned().collect();
+            if let Some(id) = keys.get(self.rng.gen_range(0..keys.len())) {
+                return *id;
+            }
+        }
+        let basic = [Op::Add.as_i64(), Op::Sub.as_i64(), Op::Mul.as_i64()];
+        basic[self.rng.gen_range(0..basic.len())]
+    }
+
     fn imprint_skill(&self, op_id: i64, sample_input: &[UVal]) {
         if let Ok(mut mem) = self.vm.plasticity.memory.write() {
-            let context = Event::Opcode { opcode: OP_LITERAL, stack_depth: sample_input.len() };
+            let context = Event::Opcode { opcode: Op::Literal.as_i64(), stack_depth: sample_input.len() };
             let target = Event::Opcode { opcode: op_id, stack_depth: sample_input.len() };
-            mem.weights.insert((context, target), 10.0);
+            mem.weights
+                .entry(context)
+                .or_insert_with(std::collections::HashMap::new)
+                .insert(target, 10.0);
         }
     }
 
@@ -261,7 +372,7 @@ impl Trainer {
         self.vm.stack.clear();
         self.vm.ip = 0;
         let previous = std::mem::replace(&mut self.vm.program, std::mem::take(program));
-        self.vm.run();
+        self.vm.run(10_000);
         *program = std::mem::take(&mut self.vm.program);
         self.vm.program = previous;
         self.vm.stack.clone()

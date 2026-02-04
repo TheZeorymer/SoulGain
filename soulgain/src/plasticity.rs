@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, RwLock, mpsc};
 use std::thread;
 use std::time::Instant;
@@ -35,7 +35,7 @@ pub enum Event {
 
 #[derive(Clone, Debug)]
 pub struct PersistentMemory {
-    pub weights: HashMap<(Event, Event), f64>,
+    pub weights: HashMap<Event, HashMap<Event, f64>>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -52,9 +52,17 @@ impl PersistentMemory {
 
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let file = OpenOptions::new().write(true).create(true).truncate(true).open(path)?;
-        let entries: Vec<WeightEntry> = self.weights.iter().map(|((from, to), weight)| {
-            WeightEntry { from: *from, to: *to, weight: *weight }
-        }).collect();
+        let entries: Vec<WeightEntry> = self
+            .weights
+            .iter()
+            .flat_map(|(from, outgoing)| {
+                outgoing.iter().map(|(to, weight)| WeightEntry {
+                    from: *from,
+                    to: *to,
+                    weight: *weight,
+                })
+            })
+            .collect();
         serde_json::to_writer_pretty(BufWriter::new(file), &entries)?;
         Ok(())
     }
@@ -62,14 +70,18 @@ impl PersistentMemory {
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         let file = File::open(path)?;
         let entries: Vec<WeightEntry> = serde_json::from_reader(BufReader::new(file))?;
-        let mut weights = HashMap::with_capacity(entries.len());
+        let mut weights: HashMap<Event, HashMap<Event, f64>> = HashMap::new();
         for entry in entries {
-            weights.insert((entry.from, entry.to), entry.weight);
+            weights
+                .entry(entry.from)
+                .or_insert_with(HashMap::new)
+                .insert(entry.to, entry.weight);
         }
         Ok(Self { weights })
     }
 }
 
+#[derive(Clone)]
 pub struct Plasticity {
     sender: mpsc::Sender<(Event, Instant)>,
     pub memory: Arc<RwLock<PersistentMemory>>,
@@ -89,7 +101,8 @@ impl Plasticity {
                     current_time.duration_since(*t).as_secs_f64() < WINDOW_S
                 });
 
-                let mut mem = mem_clone.write().unwrap();
+                let mut updates: Vec<(Event, Event, f64)> = Vec::new();
+                let mut normalize_sources: HashSet<Event> = HashSet::new();
 
                 for (past_event, past_time) in &recent_events {
                     let delta_t = current_time.duration_since(*past_time).as_secs_f64();
@@ -99,31 +112,46 @@ impl Plasticity {
                         let scale = intensity as f64 / 100.0;
                         if scale > 0.0 {
                             let reward_change = (REWARD_BOOST * scale) * (-delta_t / TAU).exp();
-                            let reward_weight = mem.weights.entry((*past_event, current_event)).or_insert(0.0);
-                            *reward_weight += reward_change;
+                            updates.push((*past_event, current_event, reward_change));
+                            normalize_sources.insert(*past_event);
                         }
                         continue;
                     }
 
                     let ltp_change = A_PLUS * (-delta_t / TAU).exp();
-                    let ltp_weight = mem.weights.entry((*past_event, current_event)).or_insert(0.0);
-                    *ltp_weight += ltp_change;
+                    updates.push((*past_event, current_event, ltp_change));
 
                     let ltd_change = A_MINUS * (-delta_t / TAU).exp();
-                    let ltd_weight = mem.weights.entry((current_event, *past_event)).or_insert(0.0);
-                    *ltd_weight -= ltd_change;
+                    updates.push((current_event, *past_event, -ltd_change));
 
-                    let mut sum = 0.0;
-                    for ((from, _), w) in mem.weights.iter() {
-                        if *from == *past_event { sum += *w; }
+                    normalize_sources.insert(*past_event);
+                }
+
+                if !updates.is_empty() {
+                    let mut mem = mem_clone.write().unwrap();
+                    for (from, to, delta) in updates {
+                        let weight = mem
+                            .weights
+                            .entry(from)
+                            .or_insert_with(HashMap::new)
+                            .entry(to)
+                            .or_insert(0.0);
+                        *weight += delta;
                     }
-                    if sum > NORMALIZATION_CAP {
-                        let factor = NORMALIZATION_CAP / sum;
-                        for ((from, _), w) in mem.weights.iter_mut() {
-                            if *from == *past_event { *w *= factor; }
+
+                    for past_event in normalize_sources {
+                        if let Some(outgoing) = mem.weights.get_mut(&past_event) {
+                            let sum: f64 = outgoing.values().sum();
+                            if sum > NORMALIZATION_CAP {
+                                let factor = NORMALIZATION_CAP / sum;
+                                for w in outgoing.values_mut() {
+                                    *w *= factor;
+                                }
+                            }
                         }
                     }
                 }
+
                 recent_events.push((current_event, current_time));
             }
         });
@@ -138,17 +166,22 @@ impl Plasticity {
 
     pub fn decay_long_term(&self) {
         if let Ok(mut mem) = self.memory.write() {
-            for w in mem.weights.values_mut() { *w *= 0.999; }
+            for outgoing in mem.weights.values_mut() {
+                for w in outgoing.values_mut() {
+                    *w *= 0.999;
+                }
+            }
         }
     }
 
     pub fn best_next_event(&self, from: Event) -> Option<Event> {
         let mem = self.memory.read().ok()?;
-        mem.weights
-            .iter()
-            .filter(|((src, _), _)| *src == from)
-            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
-            .map(|((_, dst), _)| *dst)
+        mem.weights.get(&from).and_then(|outgoing| {
+            outgoing
+                .iter()
+                .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
+                .map(|(dst, _)| *dst)
+        })
     }
 
     // --- MISSING METHODS ADDED BELOW ---
