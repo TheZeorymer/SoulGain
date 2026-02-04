@@ -97,9 +97,13 @@ impl Trainer {
                 if fitness >= 0.9999 { 
                     let logic_slice = current_program[logic_start..].to_vec();
                     let mut clean_logic = logic_slice;
+<<<<<<< codex/fix-engine-behavior-to-prevent-duplicate-concepts-cu5vf6
                     if clean_logic.last() == Some(&Op::Halt.as_f64()) {
                         clean_logic.pop();
                     }
+=======
+                    if clean_logic.last() == Some(&(OP_HALT as f64)) { clean_logic.pop(); }
+>>>>>>> chaos-engine
 
                     if !clean_logic.is_empty() {
                         let skill_id = self.register_or_find_skill(clean_logic);
@@ -108,7 +112,11 @@ impl Trainer {
                         
                         let mut optimized = current_program[..logic_start].to_vec();
                         optimized.push(skill_id as f64);
+<<<<<<< codex/fix-engine-behavior-to-prevent-duplicate-concepts-cu5vf6
                         optimized.push(Op::Halt.as_f64());
+=======
+                        optimized.push(OP_HALT as f64);
+>>>>>>> chaos-engine
                         return Some(optimized);
                     }
                     return Some(current_program); 
@@ -237,12 +245,20 @@ impl Trainer {
     fn choose_random_op_with_bias(&mut self) -> i64 {
         if !self.vm.skills.macros.is_empty() && self.rng.gen_bool(0.3) {
             let keys: Vec<_> = self.vm.skills.macros.keys().cloned().collect();
+<<<<<<< codex/fix-engine-behavior-to-prevent-duplicate-concepts-cu5vf6
             if let Some(id) = keys.get(self.rng.gen_range(0..keys.len())) {
                 return *id;
             }
         }
         let basic = [Op::Add.as_i64(), Op::Sub.as_i64(), Op::Mul.as_i64()];
         basic[self.rng.gen_range(0..basic.len())]
+=======
+            keys[self.rng.gen_range(0..keys.len())]
+        } else {
+            let basic = [OP_ADD, OP_SUB, OP_MUL];
+            basic[self.rng.gen_range(0..basic.len())]
+        }
+>>>>>>> chaos-engine
     }
 
     fn imprint_skill(&self, op_id: i64, sample_input: &[UVal]) {
