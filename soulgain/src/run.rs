@@ -90,11 +90,13 @@ pub fn test_learning_from_failure(vm: &mut SoulGainVM) {
     let memory = vm.plasticity.memory.read().unwrap();
     let mut found_scar = false;
 
-    for ((from, to), weight) in &memory.weights {
-        if *weight > 0.01 {
-            if let Event::Error(_) = to {
-                println!("  [SCAR DETECTED] {:?} leads to {:?} (Strength: {:.4})", from, to, weight);
-                found_scar = true;
+    for (from, outgoing) in &memory.weights {
+        for (to, weight) in outgoing {
+            if *weight > 0.01 {
+                if let Event::Error(_) = to {
+                    println!("  [SCAR DETECTED] {:?} leads to {:?} (Strength: {:.4})", from, to, weight);
+                    found_scar = true;
+                }
             }
         }
     }

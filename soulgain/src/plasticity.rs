@@ -35,7 +35,7 @@ pub enum Event {
 
 #[derive(Clone, Debug)]
 pub struct PersistentMemory {
-    pub weights: HashMap<(Event, Event), f64>,
+    pub weights: HashMap<Event, HashMap<Event, f64>>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -52,9 +52,17 @@ impl PersistentMemory {
 
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let file = OpenOptions::new().write(true).create(true).truncate(true).open(path)?;
-        let entries: Vec<WeightEntry> = self.weights.iter().map(|((from, to), weight)| {
-            WeightEntry { from: *from, to: *to, weight: *weight }
-        }).collect();
+        let entries: Vec<WeightEntry> = self
+            .weights
+            .iter()
+            .flat_map(|(from, outgoing)| {
+                outgoing.iter().map(|(to, weight)| WeightEntry {
+                    from: *from,
+                    to: *to,
+                    weight: *weight,
+                })
+            })
+            .collect();
         serde_json::to_writer_pretty(BufWriter::new(file), &entries)?;
         Ok(())
     }
@@ -62,9 +70,12 @@ impl PersistentMemory {
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         let file = File::open(path)?;
         let entries: Vec<WeightEntry> = serde_json::from_reader(BufReader::new(file))?;
-        let mut weights = HashMap::with_capacity(entries.len());
+        let mut weights: HashMap<Event, HashMap<Event, f64>> = HashMap::new();
         for entry in entries {
-            weights.insert((entry.from, entry.to), entry.weight);
+            weights
+                .entry(entry.from)
+                .or_insert_with(HashMap::new)
+                .insert(entry.to, entry.weight);
         }
         Ok(Self { weights })
     }
@@ -119,7 +130,12 @@ impl Plasticity {
                 if !updates.is_empty() {
                     let mut mem = mem_clone.write().unwrap();
                     for (from, to, delta) in updates {
-                        let weight = mem.weights.entry((from, to)).or_insert(0.0);
+                        let weight = mem
+                            .weights
+                            .entry(from)
+                            .or_insert_with(HashMap::new)
+                            .entry(to)
+                            .or_insert(0.0);
                         *weight += delta;
                     }
 
@@ -151,17 +167,22 @@ impl Plasticity {
 
     pub fn decay_long_term(&self) {
         if let Ok(mut mem) = self.memory.write() {
-            for w in mem.weights.values_mut() { *w *= 0.999; }
+            for outgoing in mem.weights.values_mut() {
+                for w in outgoing.values_mut() {
+                    *w *= 0.999;
+                }
+            }
         }
     }
 
     pub fn best_next_event(&self, from: Event) -> Option<Event> {
         let mem = self.memory.read().ok()?;
-        mem.weights
-            .iter()
-            .filter(|((src, _), _)| *src == from)
-            .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
-            .map(|((_, dst), _)| *dst)
+        mem.weights.get(&from).and_then(|outgoing| {
+            outgoing
+                .iter()
+                .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
+                .map(|(dst, _)| *dst)
+        })
     }
 
     // --- MISSING METHODS ADDED BELOW ---

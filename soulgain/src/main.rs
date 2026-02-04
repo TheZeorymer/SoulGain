@@ -27,7 +27,8 @@ fn main() {
     println!("\n[System] All tests completed.");
 
     if let Ok(mem) = vm.plasticity.memory.read() {
-        println!("[System] Final Synaptic Count: {}", mem.weights.len());
+        let synapse_count: usize = mem.weights.values().map(|outgoing| outgoing.len()).sum();
+        println!("[System] Final Synaptic Count: {}", synapse_count);
     }
 
     if let Err(err) = vm.plasticity.save_to_file(BRAIN_PATH) {
