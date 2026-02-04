@@ -4,7 +4,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use crate::plasticity::Event;
 use crate::types::UVal;
-use crate::{SoulGainVM, OP_HALT, OP_LITERAL, OP_ADD, OP_SUB, OP_MUL};
+use crate::{Op, SoulGainVM, SKILL_OPCODE_BASE};
 
 pub trait Oracle {
     fn evaluate(&self, input: Vec<UVal>) -> Vec<UVal>;
@@ -97,7 +97,13 @@ impl Trainer {
                 if fitness >= 0.9999 { 
                     let logic_slice = current_program[logic_start..].to_vec();
                     let mut clean_logic = logic_slice;
+<<<<<<< codex/fix-engine-behavior-to-prevent-duplicate-concepts-cu5vf6
+                    if clean_logic.last() == Some(&Op::Halt.as_f64()) {
+                        clean_logic.pop();
+                    }
+=======
                     if clean_logic.last() == Some(&(OP_HALT as f64)) { clean_logic.pop(); }
+>>>>>>> chaos-engine
 
                     if !clean_logic.is_empty() {
                         let skill_id = self.register_or_find_skill(clean_logic);
@@ -106,7 +112,11 @@ impl Trainer {
                         
                         let mut optimized = current_program[..logic_start].to_vec();
                         optimized.push(skill_id as f64);
+<<<<<<< codex/fix-engine-behavior-to-prevent-duplicate-concepts-cu5vf6
+                        optimized.push(Op::Halt.as_f64());
+=======
                         optimized.push(OP_HALT as f64);
+>>>>>>> chaos-engine
                         return Some(optimized);
                     }
                     return Some(current_program); 
@@ -137,11 +147,11 @@ impl Trainer {
 
     fn log_logic(&self, depth: usize, level: usize, strategy: &str, logic: &[f64], fitness: f64) {
         let decoded: Vec<String> = logic.iter().map(|&op| {
-            if op == OP_ADD as f64 { "ADD".into() }
-            else if op == OP_SUB as f64 { "SUB".into() }
-            else if op == OP_MUL as f64 { "MUL".into() }
-            else if op == OP_HALT as f64 { "HALT".into() } // FIXED LOG LABEL
-            else if op >= 1000.0 { format!("OP_{}", op as i64) }
+            if op == Op::Add.as_f64() { "ADD".into() }
+            else if op == Op::Sub.as_f64() { "SUB".into() }
+            else if op == Op::Mul.as_f64() { "MUL".into() }
+            else if op == Op::Halt.as_f64() { "HALT".into() }
+            else if op >= SKILL_OPCODE_BASE as f64 { format!("OP_{}", op as i64) }
             else { format!("LIT({})", op) }
         }).collect();
         let mut file = OpenOptions::new().create(true).append(true).open("text.txt").unwrap();
@@ -192,13 +202,13 @@ impl Trainer {
         let mut stack_depth = 0usize;
         for value in input {
             if let UVal::Number(n) = value {
-                self.program_buf.push(OP_LITERAL as f64);
+                self.program_buf.push(Op::Literal.as_f64());
                 self.program_buf.push(*n);
                 stack_depth += 1;
             }
         }
         let logic_start = self.program_buf.len();
-        let mut last_event = Event::Opcode { opcode: OP_LITERAL, stack_depth };
+        let mut last_event = Event::Opcode { opcode: Op::Literal.as_i64(), stack_depth };
         for _ in 0..target_len {
             let op = if random_bias {
                 self.choose_random_op_with_bias()
@@ -207,15 +217,15 @@ impl Trainer {
             };
             self.program_buf.push(op as f64);
             // Rough stack tracking
-            stack_depth = if op == OP_LITERAL as i64 { stack_depth + 1 } else { stack_depth.saturating_sub(1) };
+            stack_depth = if op == Op::Literal.as_i64() { stack_depth + 1 } else { stack_depth.saturating_sub(1) };
             last_event = Event::Opcode { opcode: op, stack_depth };
         }
-        self.program_buf.push(OP_HALT as f64);
+        self.program_buf.push(Op::Halt.as_f64());
         (last_event, logic_start)
     }
 
     fn choose_op_with_stdp(&mut self, last_event: Event, stack_depth: usize) -> i64 {
-        let mut ops: Vec<i64> = vec![OP_ADD, OP_SUB, OP_MUL];
+        let mut ops: Vec<i64> = vec![Op::Add.as_i64(), Op::Sub.as_i64(), Op::Mul.as_i64()];
         for &custom_op in self.vm.skills.macros.keys() { ops.push(custom_op); }
         if let Ok(mem) = self.vm.plasticity.memory.read() {
             let mut best_op = ops[0];
@@ -223,7 +233,7 @@ impl Trainer {
             for &op in &ops {
                 let target = Event::Opcode { opcode: op, stack_depth };
                 let mut weight = mem.weights.get(&(last_event, target)).copied().unwrap_or(0.0);
-                if op >= 1000 { weight += 2.5; } 
+                if op >= SKILL_OPCODE_BASE { weight += 2.5; } 
                 if weight > best_weight { best_weight = weight; best_op = op; }
             }
             if best_weight >= 9.0 { return best_op; }
@@ -235,16 +245,25 @@ impl Trainer {
     fn choose_random_op_with_bias(&mut self) -> i64 {
         if !self.vm.skills.macros.is_empty() && self.rng.gen_bool(0.3) {
             let keys: Vec<_> = self.vm.skills.macros.keys().cloned().collect();
+<<<<<<< codex/fix-engine-behavior-to-prevent-duplicate-concepts-cu5vf6
+            if let Some(id) = keys.get(self.rng.gen_range(0..keys.len())) {
+                return *id;
+            }
+        }
+        let basic = [Op::Add.as_i64(), Op::Sub.as_i64(), Op::Mul.as_i64()];
+        basic[self.rng.gen_range(0..basic.len())]
+=======
             keys[self.rng.gen_range(0..keys.len())]
         } else {
             let basic = [OP_ADD, OP_SUB, OP_MUL];
             basic[self.rng.gen_range(0..basic.len())]
         }
+>>>>>>> chaos-engine
     }
 
     fn imprint_skill(&self, op_id: i64, sample_input: &[UVal]) {
         if let Ok(mut mem) = self.vm.plasticity.memory.write() {
-            let context = Event::Opcode { opcode: OP_LITERAL, stack_depth: sample_input.len() };
+            let context = Event::Opcode { opcode: Op::Literal.as_i64(), stack_depth: sample_input.len() };
             let target = Event::Opcode { opcode: op_id, stack_depth: sample_input.len() };
             mem.weights.insert((context, target), 10.0);
         }
@@ -272,7 +291,7 @@ impl Trainer {
         self.vm.stack.clear();
         self.vm.ip = 0;
         let previous = std::mem::replace(&mut self.vm.program, std::mem::take(program));
-        self.vm.run();
+        self.vm.run(10_000);
         *program = std::mem::take(&mut self.vm.program);
         self.vm.program = previous;
         self.vm.stack.clone()
