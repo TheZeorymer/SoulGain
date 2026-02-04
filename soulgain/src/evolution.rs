@@ -318,7 +318,7 @@ impl Trainer {
                     }
                 }
 
-                if op >= SKILL_OPCODE_BASE { weight += 2.5; } 
+                if op >= SKILL_OPCODE_BASE { weight += 1.2; } 
 
                 // Penalty for looping
                 if history.contains(&op) {
