@@ -3,11 +3,27 @@ use soulgain::evolution::{Oracle, Trainer};
 use soulgain::types::UVal;
 use soulgain::SoulGainVM;
 
-struct SumOracle { target_count: usize }
-impl Oracle for SumOracle {
+// --- THE NEW CHALLENGE: FIBONACCI ---
+// F(0)=0, F(1)=1, F(n)=F(n-1)+F(n-2)
+struct FibOracle;
+
+impl Oracle for FibOracle {
     fn evaluate(&self, input: Vec<UVal>) -> Vec<UVal> {
-        let sum = input.iter().take(self.target_count).filter_map(|v| if let UVal::Number(n) = v { Some(*n) } else { None }).sum::<f64>();
-        vec![UVal::Number(sum)]
+        if let Some(UVal::Number(n)) = input.first() {
+            let n = *n as u64;
+            let res = fib_recursive(n);
+            vec![UVal::Number(res as f64)]
+        } else {
+            vec![]
+        }
+    }
+}
+
+fn fib_recursive(n: u64) -> u64 {
+    match n {
+        0 => 0,
+        1 => 1,
+        _ => fib_recursive(n - 1) + fib_recursive(n - 2),
     }
 }
 
@@ -22,39 +38,47 @@ fn main() {
         }
     }
     
+    // Clear intuition for a fresh problem type?
+    // We KEEP it because maybe the multiplication/math hacks it learned are useful!
     if std::path::Path::new("plasticity.json").exists() {
         let _ = vm.plasticity.load_from_file("plasticity.json");
         println!("[System] Intuition Restored.");
     }
 
-    let mut trainer = Trainer::new(vm, 10);
-    let master_input = (1..=20).map(|i| UVal::Number(i as f64)).collect::<Vec<_>>();
+    // Increase complexity limit. Loops require more instructions.
+    // Length 20 allows for setup, loop body, and condition checks.
+    let mut trainer = Trainer::new(vm, 20); 
 
-    // --- 2. STARTING FROM THE BOTTOM ---
+    // --- 2. THE CURRICULUM ---
     let levels = vec![
-        (2, "Level -1: Sum 2 (The Absolute Base)"),
-        (5, "Level 0: Sum 5 (Verification)"),
-        (7, "Level 1: Sum 7 (Extension)"),
+        (2.0, "Level 0: Fib(2) -> 1 (Basic Logic)"),   // 0, 1, 1
+        (4.0, "Level 1: Fib(4) -> 3 (Short Loop)"),    // 0, 1, 1, 2, 3
+        (6.0, "Level 2: Fib(6) -> 8 (True Loop)"),     // ... 5, 8
+        (10.0, "Level 3: Fib(10) -> 55 (Complex State)"), 
     ];
 
-    for (count, title) in levels {
+    let oracle = FibOracle;
+
+    for (input_val, title) in levels {
         println!("\n--- {} ---", title);
-        let oracle = SumOracle { target_count: count };
-        let input = master_input[0..count].to_vec();
+        
+        // Input is just ONE number: N
+        let input = vec![UVal::Number(input_val)];
 
         let start = Instant::now();
-        // We set attempts high so it really explores the search space
-        let result = trainer.synthesize(&oracle, input, 3000);
+        // Give it 10,000 attempts because discovering a loop structure is VERY hard randomly
+        let result = trainer.synthesize(&oracle, input, 10000);
         
         if let Some(prog) = result {
             println!("  Found in: {:?}", start.elapsed());
             println!("  Logic Used: {:?}", prog);
         } else {
-            println!("  [System] Stalled at {}. Logic too complex for current weights.", title);
-            break;
+            println!("  [System] Stalled at {}. Logic too complex.", title);
+            // Don't break immediately, let it try the next level just in case
+            // break; 
         }
 
-        // Save progress immediately
+        // Save progress
         let file = std::fs::File::create("skills.json").unwrap();
         serde_json::to_writer_pretty(file, &trainer.vm.skills).unwrap();
         let _ = trainer.vm.plasticity.save_to_file("plasticity.json");

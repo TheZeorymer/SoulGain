@@ -141,13 +141,21 @@ impl Plasticity {
 
                     for past_event in normalize_sources {
                         let mut sum = 0.0;
-                        for ((from, _), w) in mem.weights.iter() {
-                            if *from == past_event { sum += *w; }
+                        for (from, outgoing) in mem.weights.iter() {
+                            if *from == past_event {
+                                for (_to, w) in outgoing.iter() {
+                                    sum += *w;
+                                }
+                            }
                         }
                         if sum > NORMALIZATION_CAP {
                             let factor = NORMALIZATION_CAP / sum;
-                            for ((from, _), w) in mem.weights.iter_mut() {
-                                if *from == past_event { *w *= factor; }
+                            for (from, outgoing) in mem.weights.iter_mut() {
+                                if *from == past_event {
+                                    for w in outgoing.values_mut() {
+                                        *w *= factor;
+                                    }
+                                }
                             }
                         }
                     }

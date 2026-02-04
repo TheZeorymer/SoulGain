@@ -2,8 +2,218 @@
   {
     "from": {
       "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.5801895561736063
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.011705505841008606
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.02015325907337359
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -5.95667037853327
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -0.9110939291804857
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.12874101773139768
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -1.8351420490013945
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
         "opcode": 0,
-        "stack_depth": 2
+        "stack_depth": 0
+      }
+    },
+    "weight": -8.991436701773967
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -3.366349966924983
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.3103576330598197
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.25193124070528783
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -4.751363006158615
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -3.672112848626774
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.12595667371796412
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
       }
     },
     "to": {
@@ -12,7 +222,4258 @@
         "stack_depth": 1
       }
     },
-    "weight": 0.19999363510179952
+    "weight": -5.076568981369602
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.28435710267665015
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -2.3583903162202215
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -17.983087256146916
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -806.8306182561614
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -1912.1695573577988
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -3296.405004847354
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -1951.8873661174075
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -1330.3221723213521
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -1750.2152987303518
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": -3.836488161666628
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -108.44921499593552
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -6.25321200626726
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": -2.5631217706886504
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": 6.802253479951041
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 30.76915957276983
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -89.06840394209722
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -8.124517966421598
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -6136.59430608238
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -2049.7622601030994
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Reward": 50
+    },
+    "weight": -2.1724747068456534
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -2184.4223752883154
+  },
+  {
+    "from": {
+      "Error": "StackUnderflow"
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -9769.75773574907
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -14.30438606814208
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -56.520818189010654
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.9364802721396137
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Reward": 50
+    },
+    "weight": -0.018042760895971316
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -52.29077820798096
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -53.014073096177675
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.15416935582305272
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -26.305263043483066
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -3.2197310687760408
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -132.8774178069367
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.9775697571134507
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.5398390113461066
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -86.06043015911048
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -43.39496609096499
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -51.60569192370693
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.2213346356358177
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -288.22310600657613
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.955496013917735
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -50.54886950133565
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -26.840464485318254
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.5722321525666156
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -418.9536207244912
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.456266927081067
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -757.3873956914198
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.27680010024651747
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.1420120887795586
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Reward": 50
+    },
+    "weight": -0.9210974457812151
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -157.08846100255917
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.7841838526524237
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -317.2302976944355
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -499.18458793646937
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -428.7607923366753
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -2246.195099275809
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -397.35188954565115
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 6.142721287889202
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -430.1881048520688
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1242.0645096922624
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -28.031001987998255
+  },
+  {
+    "from": {
+      "Reward": 50
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.26473971987682476
+  },
+  {
+    "from": {
+      "Reward": 50
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": 1.2485348833901664
+  },
+  {
+    "from": {
+      "Reward": 50
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.4220603686634727
+  },
+  {
+    "from": {
+      "Reward": 50
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.011355198900701953
+  },
+  {
+    "from": {
+      "Reward": 50
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.2178287264472443
+  },
+  {
+    "from": {
+      "Reward": 50
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.18567184872582745
+  },
+  {
+    "from": {
+      "Reward": 50
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.22349802017785808
+  },
+  {
+    "from": {
+      "Reward": 50
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.6922051259843861
+  },
+  {
+    "from": {
+      "Reward": 50
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.011323360101053188
+  },
+  {
+    "from": {
+      "Reward": 50
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.369061611892766
+  },
+  {
+    "from": {
+      "Reward": 50
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.0924752646330686
+  },
+  {
+    "from": {
+      "Reward": 50
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.2612458712066301
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -20.16792348170964
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.019699069552030962
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -15.901099702211853
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -17.278407022933536
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.9860442945106456
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -4.095199425661388
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.4152805695106572
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -41.37856022744507
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -26.442038083118003
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.014046607009210326
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -7.8240504091787235
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.1832911599909628
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.20765345211783148
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.23157142801198943
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -14.484601046256767
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -17.966496196238428
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -95.33496644191244
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -20.730365602642607
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Reward": 50
+    },
+    "weight": -0.4445588496332325
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.7714068608727064
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -15.730759812439745
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -368.09273504923885
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.4863767583705527
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.697630900879475
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -313.2116563760479
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.6963351251887788
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -536.6451368745039
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -1462.581588412488
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -241.18498165678068
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 4.199705485944692
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -14.512203674268527
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -285.1067309245109
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -102.53192047224958
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -309.082829005525
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -3.3959075307751543
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1054.2409959938716
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -208.2528746543938
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 9.2898420729633
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -431.89298113748293
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.1489156141693433
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -8.793735318614337
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": -4.775383660640215
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -1905.6152617516298
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -27.02101977704955
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -633.4439719618184
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -373.0467417434729
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.4518019447693784
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -4.395232062535911
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -349.02142746931804
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -344.50395670684156
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -126.26668285919826
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1195.54185748052
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -18.62505504014778
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -255.3530457915971
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -370.6662221348963
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Reward": 50
+    },
+    "weight": -0.724342421757414
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.04159361845641603
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -6.198427589955512
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -6.3163078328529005
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.00286847608174736
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -6.520184065892779
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -2.7967294587521194
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -15.53982984736992
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -4.877054606946335
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.6011164175600097
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.06458349853411066
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.08321468040656334
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -28.412477596344527
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.08019719788805742
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.12113473116498455
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.20058742719289774
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -8.326401845546311
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -3.682704710902018
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -5.604047269258818
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -9.54645446439875
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Reward": 50
+    },
+    "weight": 0.1406926293254626
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -333.0916282812871
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.6200838181883366
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1070.907515988192
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -259.27406656220694
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.0314142918061968
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": 4.781156200504794
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": 2.0598254024301625
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -202.3392592506661
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -320.2798002224456
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -602.9759170897246
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 4.753561127780606
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.176304826722627
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -344.3104696293699
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -3.601109159323332
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -348.4586420352812
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -1838.0189589552997
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -399.5731142539547
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.7089480410104609
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -131.29436562697967
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -400.108275903004
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -564.046637719044
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Reward": 50
+    },
+    "weight": -0.1439053792471308
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.9457749196854535
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -266.0611009285733
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -27.509238882974046
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 5.020055597799262
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -364.4408079138526
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -25.555115656849647
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1150.3756639554692
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -1739.5654567955785
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": -2.750460533101228
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.411300304373397
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -341.2817438287171
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -352.4332338512733
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -2.825844454921496
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -343.5304228699595
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -1183.3148481061
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Reward": 50
+    },
+    "weight": -1.459435494040038
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.9851031313302725
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -3.9786317591787523
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -494.0895668093567
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -609.0075548763294
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": 3.623411474437015
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -2355.230858917847
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.5806753897204804
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -51.496236918800435
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 13.911314058853101
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -674.5397112928449
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -3498.459902502579
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -957.4494386000562
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -645.7030193033734
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -654.5152752187862
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.690284332263899
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -243.6093977804552
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -49.1548859536252
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.7834983381498131
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.10907272863814307
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -2.4014450704319246
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.3917131495652765
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.018805432723040926
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -8.888778153254817
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.09454645971978354
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -9.470036238719052
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -10.89377835713361
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -4.347821956650983
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -19.737065358947756
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.8347619517246916
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -55.96447668152422
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -12.268838823652356
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -25.26924784144876
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -7.828690861345135
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -6.062076179966844
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.09371130872673136
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -2.045446691590186
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.4504045159256176
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -2.9240909549790417
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.10269148646988846
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.004022119182488411
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.1395679109812255
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -2.475810589956228
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -4.226111806497482
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -4.964610000780703
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -8.982167267359548
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -2.4759129173952172
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -8.906534305405659
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -17.497940165261916
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.054118494826174854
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.0012061837871791322
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.5070456267041176
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.2876220377279987
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.791893263612071
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -39.377650878731316
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -9.926148557096482
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -5.844906522975447
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -17.955828474678523
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.0144319969378466
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.20539810475651551
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.5753080174959903
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -4.948596571888784
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.0960879962279062
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -17.807198143731796
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -8.448322500124757
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.2791711667631036
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.0024390347387175694
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.9679713065789932
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": 0.11146104877150989
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.8586579571185681
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -4.950084930906709
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -4.0877131148479
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -1632.49086690944
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Reward": 50
+    },
+    "weight": -0.7505374417372115
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1092.126730154655
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -318.25875600863685
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -385.26932079293164
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -303.50911004147406
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -2.183508415609231
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.2401402365416478
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -20.712800014303006
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -537.6591798701841
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -219.84621971744056
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -4.370217100171441
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -16.973497370169596
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.8424053350130833
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.45513728618320864
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -290.5064628805329
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -108.50552302533546
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -399.49829084061173
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 8.477724874033013
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -201.18753641750095
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.0147257781423356
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -167.34322947042764
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -4.698254730322496
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -785.8132106046379
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": 2.30417730207517
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -176.4786311737656
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.08904933894228126
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -62.31423876085155
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -235.9293211383931
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 2.2240648035799575
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -532.4833663789809
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -163.64579347596182
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -64.39825373344213
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.8423080933110907
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.3039433477351879
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.5081140136925343
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -176.31604835268848
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Reward": 50
+    },
+    "weight": 0.10616374685183298
   },
   {
     "from": {
@@ -22,87 +4483,12 @@
       }
     },
     "to": {
-      "Reward": 100
-    },
-    "weight": 1.4856000434287475
-  },
-  {
-    "from": {
-      "Reward": 100
-    },
-    "to": {
-      "Reward": 100
-    },
-    "weight": 0.49996567617817866
-  },
-  {
-    "from": {
       "Opcode": {
         "opcode": 0,
-        "stack_depth": 1
+        "stack_depth": 0
       }
     },
-    "to": {
-      "Opcode": {
-        "opcode": 1,
-        "stack_depth": 1
-      }
-    },
-    "weight": 0.19986859373036975
-  },
-  {
-    "from": {
-      "Opcode": {
-        "opcode": 0,
-        "stack_depth": 2
-      }
-    },
-    "to": {
-      "Reward": 100
-    },
-    "weight": 1.4855539072191175
-  },
-  {
-    "from": {
-      "Opcode": {
-        "opcode": 0,
-        "stack_depth": 1
-      }
-    },
-    "to": {
-      "Reward": 100
-    },
-    "weight": 1.4846609134646471
-  },
-  {
-    "from": {
-      "Opcode": {
-        "opcode": 0,
-        "stack_depth": 1
-      }
-    },
-    "to": {
-      "Opcode": {
-        "opcode": 0,
-        "stack_depth": 2
-      }
-    },
-    "weight": 0.19987495461661023
-  },
-  {
-    "from": {
-      "Opcode": {
-        "opcode": 0,
-        "stack_depth": 2
-      }
-    },
-    "to": {
-      "Opcode": {
-        "opcode": 8177,
-        "stack_depth": 2
-      }
-    },
-    "weight": 10.0
+    "weight": -1901.723771090641
   },
   {
     "from": {
@@ -113,11 +4499,11 @@
     },
     "to": {
       "Opcode": {
-        "opcode": 0,
-        "stack_depth": 1
+        "opcode": 6,
+        "stack_depth": 0
       }
     },
-    "weight": -0.2398423124764437
+    "weight": 1.423333300935233
   },
   {
     "from": {
@@ -128,40 +4514,523 @@
     },
     "to": {
       "Opcode": {
-        "opcode": 0,
-        "stack_depth": 2
-      }
-    },
-    "weight": -0.2399923621221594
-  },
-  {
-    "from": {
-      "Opcode": {
-        "opcode": 0,
-        "stack_depth": 2
-      }
-    },
-    "to": {
-      "Opcode": {
-        "opcode": 0,
+        "opcode": 5,
         "stack_depth": 1
       }
     },
-    "weight": -0.23984994553993233
+    "weight": -589.9694607229392
   },
   {
     "from": {
       "Opcode": {
-        "opcode": 0,
-        "stack_depth": 2
+        "opcode": 1,
+        "stack_depth": 1
       }
     },
     "to": {
       "Opcode": {
-        "opcode": 7660,
-        "stack_depth": 2
+        "opcode": 7,
+        "stack_depth": 0
       }
     },
-    "weight": 10.0
+    "weight": 2.84092253602558
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": 5.129223590462488
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -580.5274484568639
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -997.1074021500915
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": -2.106169707113717
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -662.4110102023594
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -424.06004674734976
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -607.7737177383352
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -537.5736655154385
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -279.84957958333257
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -27.525997677843325
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Reward": 50
+    },
+    "weight": 0.05826474558209776
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 6.757307396849425
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.2872972822382116
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -2982.8386231040226
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": -35.748140923838214
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 0
+      }
+    },
+    "weight": -1.167274531783445
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.8848940859506325
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 0,
+        "stack_depth": 0
+      }
+    },
+    "weight": -180.09191099121605
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.0340874940156801
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 5,
+        "stack_depth": 1
+      }
+    },
+    "weight": -63.855153513329675
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "weight": -5.462501941426834
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 0
+      }
+    },
+    "weight": -0.575092206967787
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 1
+      }
+    },
+    "weight": -61.21149289009662
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Error": "StackUnderflow"
+    },
+    "weight": -364.65474239132084
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 7,
+        "stack_depth": 1
+      }
+    },
+    "weight": -74.30068762436771
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 0
+      }
+    },
+    "weight": 4.468344929522839
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 1
+      }
+    },
+    "weight": -123.98006764466453
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 10,
+        "stack_depth": 0
+      }
+    },
+    "weight": 1.8489699690356907
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 2,
+        "stack_depth": 1
+      }
+    },
+    "weight": -63.410456373566255
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Reward": 50
+    },
+    "weight": -0.01761781006072936
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 6,
+        "stack_depth": 1
+      }
+    },
+    "weight": -36.85180207007398
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 1
+      }
+    },
+    "weight": -67.16077399199762
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 3,
+        "stack_depth": 0
+      }
+    },
+    "weight": 0.8311155190163086
+  },
+  {
+    "from": {
+      "Opcode": {
+        "opcode": 1,
+        "stack_depth": 0
+      }
+    },
+    "to": {
+      "Opcode": {
+        "opcode": 8,
+        "stack_depth": 1
+      }
+    },
+    "weight": -77.50163727343387
   }
 ]
