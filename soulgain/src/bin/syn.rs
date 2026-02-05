@@ -1,7 +1,12 @@
 use std::time::Instant;
-use soulgain::evolution::{Oracle, Trainer};
+
+use soulgain::hypothesis::Hypothesis;
+use soulgain::logic::WeightedInferenceEngine;
+use soulgain::plasticity::Event;
 use soulgain::types::UVal;
-use soulgain::SoulGainVM;
+use soulgain::{Op, SoulGainVM};
+
+use soulgain::evolution::Oracle;
 
 struct DNAOracle;
 
@@ -40,8 +45,6 @@ fn main() {
     }
     let _ = vm.plasticity.load_from_file("plasticity.json");
 
-    let mut trainer = Trainer::new(vm, 30); 
-
     let levels = vec![
         (vec![0.0], "Level 1: A -> T (0 -> 1)"),
         (vec![1.0], "Level 2: T -> A (1 -> 0)"),
@@ -56,21 +59,141 @@ fn main() {
     for (inputs, title) in levels {
         println!("\n--- {} ---", title);
         let vm_inputs: Vec<UVal> = inputs.iter().map(|&n| UVal::Number(n)).collect();
+        let expected = oracle.evaluate(vm_inputs.clone());
         let start = Instant::now();
-        
-        // 1,000,000 attempts to find the switching logic
-        let result = trainer.synthesize(&oracle, vm_inputs.clone(), 1_000_000);
-        
-        if let Some(prog) = result {
-            println!("  [SUCCESS] Evolved in {:?}", start.elapsed());
-            println!("  Logic: {:?}", prog);
+
+        let engine = WeightedInferenceEngine::new(&vm.plasticity, &vm.skills);
+        let mut solution: Option<Vec<f64>> = None;
+
+        // Parallel cognitive loop: logic search + lightweight hypothesis mutation.
+        let attempts_limit = 2000usize;
+        let logic_budget = 400usize;
+        let max_depth = 10usize;
+        let hypothesis_len = 6usize;
+
+        for _ in 0..attempts_limit {
+            // Logic gets the focus: deeper weighted search.
+            let logic_solution = engine.deduce(&vm_inputs, &expected, logic_budget, max_depth);
+
+            // Hypothesis mutates lightly to keep diversity alive.
+            let hypothesis_solution = run_hypothesis_attempt(
+                &vm,
+                &vm_inputs,
+                &expected,
+                hypothesis_len,
+            );
+
+            if let Some(program) = logic_solution {
+                solution = Some(program);
+                break;
+            }
+
+            if let Some(program) = hypothesis_solution {
+                solution = Some(program);
+                break;
+            }
+        }
+
+        if let Some(logic) = solution {
+            println!("  [SUCCESS] Solved in {:?}", start.elapsed());
+            println!("  Logic: {:?}", logic);
+
+            let program = build_program(&vm_inputs, &logic);
+            execute_solution(&mut vm, program.clone());
+            imprint_solution(&mut vm, &logic, vm_inputs.len());
         } else {
             println!("  [FAIL] Stalled. The AI is struggling to differentiate the two swap pairs.");
-            break; 
+            break;
         }
 
         let file = std::fs::File::create("skills.json").unwrap();
-        serde_json::to_writer_pretty(file, &trainer.vm.skills).unwrap();
-        let _ = trainer.vm.plasticity.save_to_file("plasticity.json");
+        serde_json::to_writer_pretty(file, &vm.skills).unwrap();
+        let _ = vm.plasticity.save_to_file("plasticity.json");
     }
+}
+
+fn build_program(input: &[UVal], logic: &[f64]) -> Vec<f64> {
+    let mut program = Vec::new();
+    for value in input {
+        if let UVal::Number(n) = value {
+            program.push(Op::Literal.as_f64());
+            program.push(*n);
+        }
+    }
+    program.extend_from_slice(logic);
+    if program.last() != Some(&Op::Halt.as_f64()) {
+        program.push(Op::Halt.as_f64());
+    }
+    program
+}
+
+fn execute_solution(vm: &mut SoulGainVM, program: Vec<f64>) {
+    vm.stack.clear();
+    vm.program = program;
+    vm.ip = 0;
+    vm.run(10_000);
+}
+
+fn run_hypothesis_attempt(
+    base_vm: &SoulGainVM,
+    input: &[UVal],
+    expected: &[UVal],
+    logic_len: usize,
+) -> Option<Vec<f64>> {
+    let available_skills: Vec<i64> = base_vm.skills.macros.keys().cloned().collect();
+    let hypothesis = Hypothesis::generate(logic_len, &available_skills);
+    let program = build_program(input, &hypothesis.logic);
+
+    if evaluate_program(base_vm, program, expected) {
+        Some(hypothesis.logic)
+    } else {
+        None
+    }
+}
+
+fn evaluate_program(base_vm: &SoulGainVM, program: Vec<f64>, expected: &[UVal]) -> bool {
+    let mut test_vm = SoulGainVM::new(program);
+    test_vm.skills = base_vm.skills.clone();
+    test_vm.memory = base_vm.memory.clone();
+    test_vm.plasticity = base_vm.plasticity.clone();
+
+    test_vm.run(10_000);
+
+    if test_vm.stack.len() != expected.len() {
+        return false;
+    }
+    test_vm
+        .stack
+        .iter()
+        .zip(expected.iter())
+        .all(|(a, b)| a == b)
+}
+
+fn imprint_solution(vm: &mut SoulGainVM, logic: &[f64], input_depth: usize) {
+    let norm_depth = std::cmp::min(input_depth, 5);
+    let mut events = Vec::new();
+
+    let mut last_event = Event::Opcode {
+        opcode: Op::Literal.as_i64(),
+        stack_depth: norm_depth,
+    };
+
+    if let Ok(mut mem) = vm.plasticity.memory.write() {
+        for &op in logic {
+            let opcode = op.round() as i64;
+            let next_event = Event::Opcode {
+                opcode,
+                stack_depth: norm_depth,
+            };
+            mem.weights
+                .entry(last_event)
+                .or_insert_with(std::collections::HashMap::new)
+                .insert(next_event, 10.0);
+            events.push(next_event);
+            last_event = next_event;
+        }
+    }
+
+    events.push(Event::Reward(100));
+    vm.plasticity.observe_batch(events);
 }
