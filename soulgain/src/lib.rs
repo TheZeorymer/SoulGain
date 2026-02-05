@@ -5,6 +5,7 @@ pub mod plasticity;
 pub mod evolution;
 // Add this line to src/lib.rs
 pub mod hypothesis;
+pub mod logic;
 pub use types::{UVal, SkillLibrary};
 pub use memory::MemorySystem;
 pub use plasticity::{Plasticity, Event, VMError};
