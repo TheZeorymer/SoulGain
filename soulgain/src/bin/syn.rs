@@ -3,86 +3,74 @@ use soulgain::evolution::{Oracle, Trainer};
 use soulgain::types::UVal;
 use soulgain::SoulGainVM;
 
-// --- THE NEW CHALLENGE: FIBONACCI ---
-// F(0)=0, F(1)=1, F(n)=F(n-1)+F(n-2)
-struct FibOracle;
+struct DNAOracle;
 
-impl Oracle for FibOracle {
+impl Oracle for DNAOracle {
     fn evaluate(&self, input: Vec<UVal>) -> Vec<UVal> {
-        if let Some(UVal::Number(n)) = input.first() {
-            let n = *n as u64;
-            let res = fib_recursive(n);
-            vec![UVal::Number(res as f64)]
-        } else {
-            vec![]
-        }
-    }
-}
-
-fn fib_recursive(n: u64) -> u64 {
-    match n {
-        0 => 0,
-        1 => 1,
-        _ => fib_recursive(n - 1) + fib_recursive(n - 2),
+        // Rule: 0->1, 1->0, 2->3, 3->2
+        input.iter().map(|v| {
+            if let UVal::Number(n) = v {
+                let res = match *n as i64 {
+                    0 => 1,
+                    1 => 0,
+                    2 => 3,
+                    3 => 2,
+                    _ => 0,
+                };
+                UVal::Number(res as f64)
+            } else {
+                UVal::Nil
+            }
+        }).collect()
     }
 }
 
 fn main() {
     let mut vm = SoulGainVM::new(vec![]);
 
-    // --- 1. BOOT ENGINE ---
+    println!("========================================");
+    println!("   SOULGAIN: DNA TRANSCRIBER            ");
+    println!("   Rule: [0<->1] and [2<->3]            ");
+    println!("========================================");
+
     if let Ok(file) = std::fs::File::open("skills.json") {
         if let Ok(saved_skills) = serde_json::from_reader(file) {
             vm.skills = saved_skills;
-            println!("[System] Skills Restored. Count: {}", vm.skills.macros.len());
         }
     }
-    
-    // Clear intuition for a fresh problem type?
-    // We KEEP it because maybe the multiplication/math hacks it learned are useful!
-    if std::path::Path::new("plasticity.json").exists() {
-        let _ = vm.plasticity.load_from_file("plasticity.json");
-        println!("[System] Intuition Restored.");
-    }
+    let _ = vm.plasticity.load_from_file("plasticity.json");
 
-    // Increase complexity limit. Loops require more instructions.
-    // Length 20 allows for setup, loop body, and condition checks.
-    let mut trainer = Trainer::new(vm, 20); 
+    let mut trainer = Trainer::new(vm, 30); 
 
-    // --- 2. THE CURRICULUM ---
     let levels = vec![
-        (2.0, "Level 0: Fib(2) -> 1 (Basic Logic)"),   // 0, 1, 1
-        (4.0, "Level 1: Fib(4) -> 3 (Short Loop)"),    // 0, 1, 1, 2, 3
-        (6.0, "Level 2: Fib(6) -> 8 (True Loop)"),     // ... 5, 8
-        (10.0, "Level 3: Fib(10) -> 55 (Complex State)"), 
+        (vec![0.0], "Level 1: A -> T (0 -> 1)"),
+        (vec![1.0], "Level 2: T -> A (1 -> 0)"),
+        (vec![2.0], "Level 3: C -> G (2 -> 3)"),
+        (vec![3.0], "Level 4: G -> C (3 -> 2)"),
+        // The "Brain Test": Can it handle a sequence?
+        (vec![0.0, 2.0], "Level 5: Sequence AC -> TG (0,2 -> 1,3)"),
     ];
 
-    let oracle = FibOracle;
+    let oracle = DNAOracle;
 
-    for (input_val, title) in levels {
+    for (inputs, title) in levels {
         println!("\n--- {} ---", title);
-        
-        // Input is just ONE number: N
-        let input = vec![UVal::Number(input_val)];
-
+        let vm_inputs: Vec<UVal> = inputs.iter().map(|&n| UVal::Number(n)).collect();
         let start = Instant::now();
-        // Give it 10,000 attempts because discovering a loop structure is VERY hard randomly
-        let result = trainer.synthesize(&oracle, input, 10000);
+        
+        // 1,000,000 attempts to find the switching logic
+        let result = trainer.synthesize(&oracle, vm_inputs.clone(), 1_000_000);
         
         if let Some(prog) = result {
-            println!("  Found in: {:?}", start.elapsed());
-            println!("  Logic Used: {:?}", prog);
+            println!("  [SUCCESS] Evolved in {:?}", start.elapsed());
+            println!("  Logic: {:?}", prog);
         } else {
-            println!("  [System] Stalled at {}. Logic too complex.", title);
-            // Don't break immediately, let it try the next level just in case
-            // break; 
+            println!("  [FAIL] Stalled. The AI is struggling to differentiate the two swap pairs.");
+            break; 
         }
 
-        // Save progress
         let file = std::fs::File::create("skills.json").unwrap();
         serde_json::to_writer_pretty(file, &trainer.vm.skills).unwrap();
         let _ = trainer.vm.plasticity.save_to_file("plasticity.json");
     }
-
-    println!("\n[System] Benchmark Cycle Complete.");
 }

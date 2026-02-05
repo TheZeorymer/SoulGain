@@ -100,7 +100,15 @@ impl Plasticity {
 
         thread::spawn(move || {
             let mut recent_events: Vec<(Event, Instant)> = Vec::new();
-            let mut process_event = |current_event: Event, current_time: Instant, recent_events: &mut Vec<(Event, Instant)>| {
+            
+            // The closure now correctly iterates over recent_events using .iter()
+            // In src/plasticity.rs
+
+// Find this line (around line 105):
+// let mut process_event = |current_event: Event, current_time: Instant, recent_events: &mut Vec<(Event, Instant)>| {
+
+// Change it to (remove 'mut'):
+        let process_event = |current_event: Event, current_time: Instant, recent_events: &mut Vec<(Event, Instant)>| {
                 recent_events.retain(|(_, t)| {
                     current_time.duration_since(*t).as_secs_f64() < WINDOW_S
                 });
@@ -108,8 +116,10 @@ impl Plasticity {
                 let mut updates: Vec<(Event, Event, f64)> = Vec::new();
                 let mut normalize_sources: HashSet<Event> = HashSet::new();
 
-                for (past_event, past_time) in &recent_events {
+                // FIX: Use .iter() to iterate over the vector immutably
+                for (past_event, past_time) in recent_events.iter() {
                     let delta_t = current_time.duration_since(*past_time).as_secs_f64();
+                    // Basic sanity check for time
                     if delta_t <= 0.0 || delta_t >= WINDOW_S { continue; }
 
                     match current_event {
@@ -131,6 +141,7 @@ impl Plasticity {
                         _ => {}
                     }
 
+                    // STDP Rules
                     let ltp_change = A_PLUS * (-delta_t / TAU).exp();
                     updates.push((*past_event, current_event, ltp_change));
 
@@ -140,6 +151,7 @@ impl Plasticity {
                     normalize_sources.insert(*past_event);
                 }
 
+                // Apply Updates
                 if !updates.is_empty() {
                     let mut mem = mem_clone.write().unwrap();
                     for (from, to, delta) in updates {
@@ -152,6 +164,7 @@ impl Plasticity {
                         *weight += delta;
                     }
 
+                    // Normalize weights to prevent explosion
                     for past_event in normalize_sources {
                         let mut sum = 0.0;
                         for (from, outgoing) in mem.weights.iter() {
@@ -188,12 +201,16 @@ impl Plasticity {
                         }
                         let now = Instant::now();
                         let len = events.len();
+                        
+                        // Spread batch events over the window to simulate sequence
                         let step = if len > 1 {
                             WINDOW_S / (len as f64)
                         } else {
                             0.0
                         };
+                        
                         for (idx, event) in events.into_iter().enumerate() {
+                            // Calculate a simulated past time for this event
                             let offset = (len - 1 - idx) as f64 * step;
                             let event_time = if offset > 0.0 {
                                 now - Duration::from_secs_f64(offset)
@@ -238,8 +255,6 @@ impl Plasticity {
                 .map(|(dst, _)| *dst)
         })
     }
-
-    // --- MISSING METHODS ADDED BELOW ---
 
     pub fn save_to_file<P: AsRef<Path>>(&self, path: P) -> io::Result<()> {
         let mem = self.memory.read().map_err(|_| {

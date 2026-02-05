@@ -206,6 +206,8 @@ impl Trainer {
             else if op >= SKILL_OPCODE_BASE as f64 { format!("OP_{}", op as i64) }
             else { format!("LIT({})", op) }
         }).collect();
+        // Commenting out logging for performance
+        /*
         let mut file = OpenOptions::new().create(true).append(true).open("text.txt").unwrap();
         writeln!(
             file,
@@ -216,6 +218,7 @@ impl Trainer {
             fitness,
             decoded
         ).unwrap();
+        */
     }
     
     fn speculate_new_skill(&mut self, program: &mut Vec<f64>, logic_start: usize) -> Option<i64> {
@@ -291,7 +294,34 @@ impl Trainer {
     }
 
     fn choose_op_with_stdp(&mut self, last_event: Event, stack_depth: usize, history: &[i64]) -> i64 {
-        let mut ops: Vec<i64> = vec![Op::Add.as_i64(), Op::Sub.as_i64(), Op::Mul.as_i64()];
+        let mut ops: Vec<i64> = vec![
+            Op::Add.as_i64(), 
+            Op::Sub.as_i64(), 
+            Op::Mul.as_i64(),
+            Op::Mod.as_i64(),
+            Op::Inc.as_i64(),
+            Op::Dec.as_i64(),
+            Op::Eq.as_i64(),
+            Op::Gt.as_i64(),
+            Op::Not.as_i64(),
+            Op::And.as_i64(),
+            Op::Or.as_i64(),
+            Op::Xor.as_i64(),
+            Op::IsZero.as_i64(),
+            Op::Swap.as_i64(),
+            Op::Dup.as_i64(),
+            Op::Over.as_i64(),
+            Op::Drop.as_i64(),
+            Op::Store.as_i64(),
+            Op::Load.as_i64(),
+            Op::Jmp.as_i64(),
+            Op::JmpIf.as_i64(),
+            Op::Call.as_i64(),
+            Op::Ret.as_i64(),
+            Op::Intuition.as_i64(),
+            Op::Reward.as_i64(),
+            Op::Evolve.as_i64(),
+        ];
         for &custom_op in self.vm.skills.macros.keys() { ops.push(custom_op); }
 
         if let Ok(mem) = self.vm.plasticity.memory.read() {
@@ -344,7 +374,34 @@ impl Trainer {
                 return *id;
             }
         }
-        let basic = [Op::Add.as_i64(), Op::Sub.as_i64(), Op::Mul.as_i64()];
+        let basic = [
+            Op::Add.as_i64(), 
+            Op::Sub.as_i64(), 
+            Op::Mul.as_i64(),
+            Op::Mod.as_i64(),
+            Op::Inc.as_i64(),
+            Op::Dec.as_i64(),
+            Op::Eq.as_i64(),
+            Op::Gt.as_i64(),
+            Op::Not.as_i64(),
+            Op::And.as_i64(),
+            Op::Or.as_i64(),
+            Op::Xor.as_i64(),
+            Op::IsZero.as_i64(),
+            Op::Swap.as_i64(),
+            Op::Dup.as_i64(),
+            Op::Over.as_i64(),
+            Op::Drop.as_i64(),
+            Op::Store.as_i64(),
+            Op::Load.as_i64(),
+            Op::Jmp.as_i64(),
+            Op::JmpIf.as_i64(),
+            Op::Call.as_i64(),
+            Op::Ret.as_i64(),
+            Op::Intuition.as_i64(),
+            Op::Reward.as_i64(),
+            Op::Evolve.as_i64(),
+        ];
         basic[self.rng.gen_range(0..basic.len())]
     }
 
@@ -371,15 +428,25 @@ impl Trainer {
     }
 
     fn calculate_fitness(&self, result: &[UVal], expected: &[UVal]) -> f64 {
-        if result.is_empty() || result.len() != expected.len() { return 0.0; }
-        let mut score = 0.0;
-        for (got, want) in result.iter().zip(expected.iter()) {
-            if let (UVal::Number(a), UVal::Number(b)) = (got, want) {
+    if result.is_empty() || result.len() != expected.len() { return 0.0; }
+    let mut score = 0.0;
+    
+    for (got, want) in result.iter().zip(expected.iter()) {
+        match (got, want) {
+            // Existing Number comparison
+            (UVal::Number(a), UVal::Number(b)) => {
                 score += 1.0 / (1.0 + (a - b).abs());
+            },
+            // [FIX] Logic Comparison: Convert both to truthy booleans
+            _ => {
+                if got.is_truthy() == want.is_truthy() {
+                    score += 1.0;
+                }
             }
         }
-        score / expected.len() as f64
     }
+    score / expected.len() as f64
+}
 
     fn execute_program(&mut self, program: &mut Vec<f64>) -> Vec<UVal> {
         self.vm.stack.clear();

@@ -12,12 +12,39 @@ impl Hypothesis {
         let mut rng = rand::thread_rng();
         let mut logic = Vec::with_capacity(target_len);
         
+        // [UPDATED] Full Operator Gene Pool
         let primitives = [
             Op::Add.as_i64(), 
             Op::Sub.as_i64(), 
             Op::Mul.as_i64(),
+            Op::Mod.as_i64(),
+            Op::Inc.as_i64(),
+            Op::Dec.as_i64(),
+            
             Op::Eq.as_i64(),
+            Op::Gt.as_i64(),
             Op::Not.as_i64(),
+            Op::And.as_i64(),
+            Op::Or.as_i64(),
+            Op::Xor.as_i64(),
+            Op::IsZero.as_i64(),
+
+            Op::Swap.as_i64(),
+            Op::Dup.as_i64(),
+            Op::Over.as_i64(),
+            Op::Drop.as_i64(),
+
+            Op::Store.as_i64(),
+            Op::Load.as_i64(),
+
+            Op::Jmp.as_i64(),
+            Op::JmpIf.as_i64(),
+            Op::Call.as_i64(),
+            Op::Ret.as_i64(),
+            
+            Op::Intuition.as_i64(),
+            Op::Reward.as_i64(),
+            Op::Evolve.as_i64(),
         ];
 
         for _ in 0..target_len {
