@@ -95,7 +95,6 @@ pub struct SoulGainVM {
     pub last_event: Option<Event>,
     pub skills: SkillLibrary,
     trace: Vec<Event>,
-    program_is_valid: bool,
 }
 
 #[derive(Debug)]
@@ -106,14 +105,9 @@ struct ProgramFrame {
 
 impl SoulGainVM {
     pub fn new(program: Vec<f64>) -> Self {
-        let program_is_valid = decode_ops_for_validation(&program)
-            .ok()
-            .and_then(|ops| validate_ops(&ops).ok())
-            .is_some();
-
         Self {
             program,
-            stack: Vec::new(),
+            stack: Vec::with_capacity(256),
             call_stack: Vec::new(),
             program_stack: Vec::new(),
             ip: 0,
@@ -121,11 +115,11 @@ impl SoulGainVM {
             plasticity: Plasticity::new(),
             last_event: None,
             skills: SkillLibrary::new(),
-            trace: Vec::new(),
-            program_is_valid,
+            trace: Vec::with_capacity(512),
         }
     }
 
+    #[inline(always)]
     fn decode_opcode(raw: f64) -> Result<i64, VMError> {
         if !raw.is_finite() {
             return Err(VMError::InvalidOpcode(-1));
@@ -166,11 +160,6 @@ impl SoulGainVM {
     }
 
     pub fn run(&mut self, max_cycles: usize) {
-        if !self.program_is_valid {
-            self.record_error(VMError::InvalidOpcode(-2));
-            return;
-        }
-
         let mut cycles = 0usize;
         while cycles < max_cycles {
             if self.ip >= self.program.len() {
@@ -180,7 +169,7 @@ impl SoulGainVM {
                 self.flush_trace();
                 break;
             }
-            let raw = self.program[self.ip];
+            let raw = unsafe { *self.program.get_unchecked(self.ip) };
             self.ip += 1;
             cycles += 1;
 
@@ -215,14 +204,6 @@ impl SoulGainVM {
 
     fn execute_skill(&mut self, opcode: i64) {
         if let Some(macro_code) = self.skills.get_skill(opcode).cloned() {
-            if let Ok(ops) = decode_ops_for_validation(&macro_code) {
-                if let Err(err) = validate_ops(&ops) {
-                    self.record_error(VMError::InvalidOpcode(opcode));
-                    eprintln!("skill validation failed for opcode {opcode}: {err:?}");
-                    return;
-                }
-            }
-
             let frame = ProgramFrame {
                 program: std::mem::take(&mut self.program),
                 ip: self.ip,
@@ -235,6 +216,7 @@ impl SoulGainVM {
         }
     }
 
+    #[inline(always)]
     fn execute_opcode(&mut self, opcode: Op) -> bool {
         let info = logic_of(opcode);
         if info.stack_delta < 0 && self.stack.len() < (-info.stack_delta) as usize {
@@ -253,7 +235,7 @@ impl SoulGainVM {
                 if self.ip >= self.program.len() {
                     return false;
                 }
-                let v = self.program[self.ip];
+                let v = unsafe { *self.program.get_unchecked(self.ip) };
                 self.ip += 1;
                 self.stack.push(UVal::Number(v));
             }
@@ -438,9 +420,17 @@ impl SoulGainVM {
             }
             Op::Evolve => {
                 if let Some(UVal::Number(id)) = self.stack.pop() {
-                    self.skills.define_skill(id as i64, self.program.clone());
-                    self.record_event(Event::Reward(100));
-                    self.flush_trace();
+                    let skill_program = self.program.clone();
+                    match decode_ops_for_validation(&skill_program).and_then(|ops| {
+                        validate_ops(&ops).map_err(|_| VMError::InvalidEvolve(id as i64))
+                    }) {
+                        Ok(_) => {
+                            self.skills.define_skill(id as i64, skill_program);
+                            self.record_event(Event::Reward(100));
+                            self.flush_trace();
+                        }
+                        Err(err) => self.record_error(err),
+                    }
                 } else {
                     self.record_error(VMError::InvalidEvolve(-1));
                 }

@@ -1,5 +1,34 @@
+use std::time::Instant;
+
+use soulgain::SoulGainVM;
 use soulgain::logic::{aggregate_trace_logic, all_ops, logic_of, validate_ops};
 use soulgain::vm::Op;
+
+fn run_cps_stress_test() {
+    let program = vec![
+        Op::Literal.as_f64(),
+        1.0,
+        Op::Literal.as_f64(),
+        2.0,
+        Op::Add.as_f64(),
+        Op::Drop.as_f64(),
+        Op::Jmp.as_f64(),
+        0.0,
+    ];
+
+    let mut vm = SoulGainVM::new(program);
+    let cycles = 2_000_000usize;
+    let start = Instant::now();
+    vm.run(cycles);
+    let elapsed = start.elapsed().as_secs_f64();
+    let cps = (cycles as f64 / elapsed) as u64;
+
+    println!("\n=== Stress Test Oracle (CPS) ===");
+    println!(
+        "cycles: {cycles}, elapsed: {:.3}s, cycles/sec: {cps}",
+        elapsed
+    );
+}
 
 fn main() {
     println!("=== SoulGain Op Logic Table ===");
@@ -28,4 +57,6 @@ fn main() {
     let summary = aggregate_trace_logic(&trace);
     println!("trace: {:?}", trace);
     println!("summary: {:?}", summary);
+
+    run_cps_stress_test();
 }
