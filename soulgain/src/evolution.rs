@@ -1,11 +1,11 @@
+use crate::hypothesis::Hypothesis;
+use crate::plasticity::Event;
+use crate::types::UVal;
+use crate::{Op, SoulGainVM, SKILL_OPCODE_BASE};
 use rand::Rng;
 use std::collections::HashSet;
 use std::fs::OpenOptions;
 use std::io::Write;
-use crate::plasticity::Event;
-use crate::types::UVal;
-use crate::{Op, SoulGainVM, SKILL_OPCODE_BASE};
-use crate::hypothesis::Hypothesis;
 
 pub trait Oracle {
     fn evaluate(&self, input: Vec<UVal>) -> Vec<UVal>;
@@ -36,6 +36,50 @@ impl Trainer {
         std::cmp::min(depth, 5)
     }
 
+    fn detect_problem_shape(&self, input: &[UVal], expected: &[UVal]) -> u8 {
+        if input.len() != expected.len() {
+            return 3;
+        }
+
+        let mut has_str_to_num = false;
+        let mut numeric_deltas = Vec::new();
+
+        for (a, b) in input.iter().zip(expected.iter()) {
+            match (a, b) {
+                (UVal::String(_), UVal::Number(_)) => {
+                    has_str_to_num = true;
+                }
+                (UVal::Number(x), UVal::Number(y)) => {
+                    numeric_deltas.push(*y - *x);
+                }
+                _ => {}
+            }
+        }
+
+        if has_str_to_num {
+            return 5;
+        }
+
+        if !numeric_deltas.is_empty() {
+            let baseline = numeric_deltas[0];
+            let all_same = numeric_deltas
+                .iter()
+                .all(|d| (*d - baseline).abs() < f64::EPSILON);
+            if !all_same {
+                return 6;
+            }
+            if (baseline - 1.0).abs() < f64::EPSILON || (baseline + 1.0).abs() < f64::EPSILON {
+                return 1;
+            }
+            if baseline.abs() < f64::EPSILON {
+                return 2;
+            }
+            return 4;
+        }
+
+        0
+    }
+
     pub fn synthesize<O: Oracle + ?Sized>(
         &mut self,
         oracle: &O,
@@ -46,33 +90,34 @@ impl Trainer {
         let mut failed_attempts: HashSet<Vec<u64>> = HashSet::new();
         let mut best_program: Option<Vec<f64>> = None;
         let mut best_fitness = 0.0;
-        
-        let input_preamble_len = input.len() * 2; 
+
+        let input_preamble_len = input.len() * 2;
+        let shape_id = self.detect_problem_shape(&input, &expected);
 
         for current_len in 1..=self.max_program_len {
-            failed_attempts.clear(); 
+            failed_attempts.clear();
 
             for level_attempt in 1..=attempts_limit {
                 let r = self.rng.r#gen::<f64>();
 
                 // Strategy Selection Logic
                 let has_clue = best_program.is_some() && best_fitness > 0.0001;
-                
+
                 let try_hypothesis = if !has_clue {
                     // No clue? Guess wildly (Hypothesis) or use STDP (Random Build)
-                    r < 0.5 
+                    r < 0.5
                 } else {
                     // Have a clue? Only guess completely new things 10% of the time.
-                    r < 0.1 
+                    r < 0.1
                 };
 
-                let try_speculation = !try_hypothesis && has_clue && r < 0.4; 
+                let try_speculation = !try_hypothesis && has_clue && r < 0.4;
 
                 let (current_program, logic_start, strategy) = if try_hypothesis {
                     // --- HYPOTHESIS MODE (Fresh Guess) ---
                     let skills: Vec<i64> = self.vm.skills.macros.keys().cloned().collect();
                     let hypothesis = Hypothesis::generate(current_len, &skills);
-                    
+
                     self.program_buf.clear();
                     // Load inputs
                     for value in &input {
@@ -83,28 +128,28 @@ impl Trainer {
                     }
                     let start = self.program_buf.len();
                     self.program_buf.extend_from_slice(&hypothesis.logic);
-                    
+
                     if self.program_buf.last() != Some(&Op::Halt.as_f64()) {
                         self.program_buf.push(Op::Halt.as_f64());
                     }
 
                     (self.program_buf.clone(), start, "HYPOTHESIS")
-
                 } else if try_speculation {
                     // --- SPECULATION MODE (Optimization) ---
                     let mut variant = best_program.clone().unwrap();
                     let _id = self.speculate_new_skill(&mut variant, input_preamble_len);
                     (variant, input_preamble_len, "SPEC")
-
                 } else if has_clue {
                     // --- MUTATION / EXTEND MODE ---
                     let mut variant = best_program.clone().unwrap();
-                    
+
                     // If the best program is shorter than current_len, EXTEND it.
                     let logic_len = variant.len().saturating_sub(input_preamble_len);
                     if logic_len < current_len {
-                         // Remove HALT
-                        if variant.last() == Some(&Op::Halt.as_f64()) { variant.pop(); }
+                        // Remove HALT
+                        if variant.last() == Some(&Op::Halt.as_f64()) {
+                            variant.pop();
+                        }
                         // Add a random op to grow it
                         variant.push(self.choose_random_op_with_bias() as f64);
                         variant.push(Op::Halt.as_f64());
@@ -114,36 +159,51 @@ impl Trainer {
                         self.mutate_program(&mut variant, input_preamble_len);
                         (variant, input_preamble_len, "MUTATE")
                     }
-
                 } else {
                     // --- RANDOM BUILD (STDP) ---
-                    let (_last_event, start) = self.build_program(&input, current_len, true);
+                    let (_last_event, start) =
+                        self.build_program(&input, current_len, true, shape_id);
                     (self.program_buf.clone(), start, "RANDOM")
                 };
 
-                let logic_bits: Vec<u64> = current_program[logic_start..].iter().map(|f| f.to_bits()).collect();
-                if failed_attempts.contains(&logic_bits) { continue; }
+                let logic_bits: Vec<u64> = current_program[logic_start..]
+                    .iter()
+                    .map(|f| f.to_bits())
+                    .collect();
+                if failed_attempts.contains(&logic_bits) {
+                    continue;
+                }
                 failed_attempts.insert(logic_bits);
 
                 let mut exec_buf = current_program.clone();
                 let result = self.execute_program(&mut exec_buf);
                 let fitness = self.calculate_fitness(&result, &expected);
 
-                self.log_logic(current_len, level_attempt, strategy, &current_program[logic_start..], fitness);
+                self.log_logic(
+                    current_len,
+                    level_attempt,
+                    strategy,
+                    &current_program[logic_start..],
+                    fitness,
+                );
 
                 // Update best even if improvement is tiny
                 if fitness > best_fitness {
                     best_fitness = fitness;
                     best_program = Some(current_program.clone());
                     // Give small rewards for ANY progress
-                    self.vm.plasticity.observe(Event::Reward((fitness * 100.0) as u8));
+                    self.vm
+                        .plasticity
+                        .observe(Event::Reward((fitness * 100.0) as u8));
                 }
 
                 // --- SUCCESS & PRUNING BLOCK ---
-                if fitness >= 0.9999 { 
+                if fitness >= 0.9999 {
                     let logic_slice = current_program[logic_start..].to_vec();
                     let mut clean_logic = logic_slice;
-                    if clean_logic.last() == Some(&(Op::Halt.as_f64())) { clean_logic.pop(); }
+                    if clean_logic.last() == Some(&(Op::Halt.as_f64())) {
+                        clean_logic.pop();
+                    }
 
                     // [NEW] Pruning Integration
                     use crate::hypothesis::Pruner;
@@ -151,22 +211,29 @@ impl Trainer {
 
                     if !pruned_logic.is_empty() {
                         let skill_id = self.register_or_find_skill(pruned_logic.clone());
-                        
+
                         // Optional: Log the optimization
                         if clean_logic.len() > pruned_logic.len() {
-                            println!("  [OPTIMIZED] Len {} -> Len {}", clean_logic.len(), pruned_logic.len());
+                            println!(
+                                "  [OPTIMIZED] Len {} -> Len {}",
+                                clean_logic.len(),
+                                pruned_logic.len()
+                            );
                         }
-                        
-                        println!("  [SUCCESS] Concept: Opcode {} | Len: {}", skill_id, current_len);
+
+                        println!(
+                            "  [SUCCESS] Concept: Opcode {} | Len: {}",
+                            skill_id, current_len
+                        );
                         self.imprint_skill(skill_id, &input);
-                        
+
                         // Construct the optimized return program
                         let mut optimized = current_program[..logic_start].to_vec();
                         optimized.push(skill_id as f64);
                         optimized.push(Op::Halt.as_f64());
                         return Some(optimized);
                     }
-                    return Some(current_program); 
+                    return Some(current_program);
                 }
             }
         }
@@ -181,7 +248,9 @@ impl Trainer {
         }
 
         for (id, macro_logic) in &self.vm.skills.macros {
-            if *macro_logic == logic { return *id; }
+            if *macro_logic == logic {
+                return *id;
+            }
         }
         let new_id = self.generate_random_id();
         self.vm.skills.define_skill(new_id, logic);
@@ -198,14 +267,24 @@ impl Trainer {
     }
 
     fn log_logic(&self, depth: usize, level: usize, strategy: &str, logic: &[f64], fitness: f64) {
-        let decoded: Vec<String> = logic.iter().map(|&op| {
-            if op == Op::Add.as_f64() { "ADD".into() }
-            else if op == Op::Sub.as_f64() { "SUB".into() }
-            else if op == Op::Mul.as_f64() { "MUL".into() }
-            else if op == Op::Halt.as_f64() { "HALT".into() }
-            else if op >= SKILL_OPCODE_BASE as f64 { format!("OP_{}", op as i64) }
-            else { format!("LIT({})", op) }
-        }).collect();
+        let decoded: Vec<String> = logic
+            .iter()
+            .map(|&op| {
+                if op == Op::Add.as_f64() {
+                    "ADD".into()
+                } else if op == Op::Sub.as_f64() {
+                    "SUB".into()
+                } else if op == Op::Mul.as_f64() {
+                    "MUL".into()
+                } else if op == Op::Halt.as_f64() {
+                    "HALT".into()
+                } else if op >= SKILL_OPCODE_BASE as f64 {
+                    format!("OP_{}", op as i64)
+                } else {
+                    format!("LIT({})", op)
+                }
+            })
+            .collect();
         // Commenting out logging for performance
         /*
         let mut file = OpenOptions::new().create(true).append(true).open("text.txt").unwrap();
@@ -220,13 +299,17 @@ impl Trainer {
         ).unwrap();
         */
     }
-    
+
     fn speculate_new_skill(&mut self, program: &mut Vec<f64>, logic_start: usize) -> Option<i64> {
-        let logic_len = program.len().saturating_sub(1).saturating_sub(logic_start); 
-        if logic_len < 2 { return None; }
+        let logic_len = program.len().saturating_sub(1).saturating_sub(logic_start);
+        if logic_len < 2 {
+            return None;
+        }
         let window_size = self.rng.gen_range(2..=std::cmp::min(5, logic_len));
         let max_start = (program.len() - 1).saturating_sub(window_size);
-        if max_start < logic_start { return None; }
+        if max_start < logic_start {
+            return None;
+        }
         let start_idx = self.rng.gen_range(logic_start..=max_start);
         let pattern = program[start_idx..start_idx + window_size].to_vec();
         let new_id = self.register_or_find_skill(pattern);
@@ -236,9 +319,13 @@ impl Trainer {
     }
 
     fn mutate_program(&mut self, program: &mut Vec<f64>, logic_start: usize) {
-        if program.len() <= logic_start + 1 { return; } 
+        if program.len() <= logic_start + 1 {
+            return;
+        }
         let mutable_range = logic_start..program.len().saturating_sub(1);
-        if mutable_range.is_empty() { return; }
+        if mutable_range.is_empty() {
+            return;
+        }
         // [FIX] Clone the range because gen_range consumes it (Range is not Copy)
         let idx = self.rng.gen_range(mutable_range.clone());
         if self.rng.gen_bool(0.5) && program.len() > logic_start + 2 {
@@ -250,7 +337,13 @@ impl Trainer {
         }
     }
 
-    fn build_program(&mut self, input: &[UVal], target_len: usize, random_bias: bool) -> (Event, usize) {
+    fn build_program(
+        &mut self,
+        input: &[UVal],
+        target_len: usize,
+        random_bias: bool,
+        shape_id: u8,
+    ) -> (Event, usize) {
         self.program_buf.clear();
         let mut stack_depth = 0usize;
         for value in input {
@@ -261,8 +354,12 @@ impl Trainer {
             }
         }
         let logic_start = self.program_buf.len();
-        let mut last_event = Event::Opcode { opcode: Op::Literal.as_i64(), stack_depth };
-        
+        let mut last_event = Event::Opcode {
+            opcode: Op::Literal.as_i64(),
+            stack_depth,
+        };
+        self.vm.plasticity.observe(Event::Context(shape_id));
+
         // [FIX] Track history to prevent loops
         let mut history: Vec<i64> = Vec::new();
 
@@ -271,36 +368,48 @@ impl Trainer {
                 self.choose_random_op_with_bias()
             } else {
                 // [FIX] Pass the history
-                self.choose_op_with_stdp(last_event, stack_depth, &history)
+                self.choose_op_with_stdp(last_event, stack_depth, &history, shape_id)
             };
-            
+
             self.program_buf.push(op as f64);
-            
+
             // Update History (Keep last 3)
             history.push(op);
-            if history.len() > 3 { history.remove(0); }
+            if history.len() > 3 {
+                history.remove(0);
+            }
 
             // Rough stack tracking
-            if op == Op::Literal.as_i64() { 
-                stack_depth += 1; 
-            } else { 
-                stack_depth = stack_depth.saturating_sub(1); 
+            if op == Op::Literal.as_i64() {
+                stack_depth += 1;
+            } else {
+                stack_depth = stack_depth.saturating_sub(1);
             };
-            
-            last_event = Event::Opcode { opcode: op, stack_depth };
+
+            last_event = Event::Opcode {
+                opcode: op,
+                stack_depth,
+            };
         }
         self.program_buf.push(Op::Halt.as_f64());
         (last_event, logic_start)
     }
 
-    fn choose_op_with_stdp(&mut self, last_event: Event, stack_depth: usize, history: &[i64]) -> i64 {
+    fn choose_op_with_stdp(
+        &mut self,
+        last_event: Event,
+        stack_depth: usize,
+        history: &[i64],
+        shape_id: u8,
+    ) -> i64 {
         let mut ops: Vec<i64> = vec![
-            Op::Add.as_i64(), 
-            Op::Sub.as_i64(), 
+            Op::Add.as_i64(),
+            Op::Sub.as_i64(),
             Op::Mul.as_i64(),
             Op::Mod.as_i64(),
             Op::Inc.as_i64(),
             Op::Dec.as_i64(),
+            Op::Parse.as_i64(),
             Op::Eq.as_i64(),
             Op::Gt.as_i64(),
             Op::Not.as_i64(),
@@ -322,7 +431,9 @@ impl Trainer {
             Op::Reward.as_i64(),
             Op::Evolve.as_i64(),
         ];
-        for &custom_op in self.vm.skills.macros.keys() { ops.push(custom_op); }
+        for &custom_op in self.vm.skills.macros.keys() {
+            ops.push(custom_op);
+        }
 
         if let Ok(mem) = self.vm.plasticity.memory.read() {
             let mut best_op = ops[0];
@@ -330,16 +441,24 @@ impl Trainer {
 
             // [FIX] Normalize Context (Context Overfitting Fix)
             let norm_depth = Self::normalize_depth(stack_depth);
-            
+
             let norm_last_event = match last_event {
-                Event::Opcode { opcode, stack_depth: d } => 
-                    Event::Opcode { opcode, stack_depth: Self::normalize_depth(d) },
+                Event::Opcode {
+                    opcode,
+                    stack_depth: d,
+                } => Event::Opcode {
+                    opcode,
+                    stack_depth: Self::normalize_depth(d),
+                },
                 _ => last_event,
             };
 
             for &op in &ops {
-                let target = Event::Opcode { opcode: op, stack_depth: norm_depth };
-                
+                let target = Event::Opcode {
+                    opcode: op,
+                    stack_depth: norm_depth,
+                };
+
                 // [FIX] Correct Nested Map Access
                 let mut weight = 0.0;
                 if let Some(targets) = mem.weights.get(&norm_last_event) {
@@ -348,21 +467,38 @@ impl Trainer {
                     }
                 }
 
-                if op >= SKILL_OPCODE_BASE { weight += 1.2; } 
+                if let Some(ctx_targets) = mem.weights.get(&Event::Context(shape_id)) {
+                    if let Some(ctx_w) = ctx_targets.get(&target) {
+                        weight += *ctx_w * 0.35;
+                    }
+                }
+
+                if shape_id == 5 && op == Op::Parse.as_i64() {
+                    weight += 12.0;
+                }
+
+                if op >= SKILL_OPCODE_BASE {
+                    weight += 1.2;
+                }
 
                 // Penalty for looping
                 if history.contains(&op) {
-                    weight -= 5.0; 
+                    weight -= 5.0;
                 }
 
-                if weight > best_weight { best_weight = weight; best_op = op; }
+                if weight > best_weight {
+                    best_weight = weight;
+                    best_op = op;
+                }
             }
-            
-            if best_weight >= 9.0 && self.rng.gen_bool(0.9) { return best_op; }
+
+            if best_weight >= 9.0 && self.rng.gen_bool(0.9) {
+                return best_op;
+            }
         }
-        
-        if self.rng.gen_bool(self.explore_rate) { 
-            return ops[self.rng.gen_range(0..ops.len())]; 
+
+        if self.rng.gen_bool(self.explore_rate) {
+            return ops[self.rng.gen_range(0..ops.len())];
         }
         ops[0]
     }
@@ -375,12 +511,13 @@ impl Trainer {
             }
         }
         let basic = [
-            Op::Add.as_i64(), 
-            Op::Sub.as_i64(), 
+            Op::Add.as_i64(),
+            Op::Sub.as_i64(),
             Op::Mul.as_i64(),
             Op::Mod.as_i64(),
             Op::Inc.as_i64(),
             Op::Dec.as_i64(),
+            Op::Parse.as_i64(),
             Op::Eq.as_i64(),
             Op::Gt.as_i64(),
             Op::Not.as_i64(),
@@ -409,10 +546,16 @@ impl Trainer {
         if let Ok(mut mem) = self.vm.plasticity.memory.write() {
             // [FIX] NORMALIZE: Save the skill as applicable to any "deep enough" stack
             let norm_depth = Self::normalize_depth(sample_input.len());
-            
-            let context = Event::Opcode { opcode: Op::Literal.as_i64(), stack_depth: norm_depth };
-            let target = Event::Opcode { opcode: op_id, stack_depth: norm_depth };
-            
+
+            let context = Event::Opcode {
+                opcode: Op::Literal.as_i64(),
+                stack_depth: norm_depth,
+            };
+            let target = Event::Opcode {
+                opcode: op_id,
+                stack_depth: norm_depth,
+            };
+
             mem.weights
                 .entry(context)
                 .or_insert_with(std::collections::HashMap::new)
@@ -423,30 +566,34 @@ impl Trainer {
     fn generate_random_id(&mut self) -> i64 {
         loop {
             let id = self.rng.gen_range(1000..9999);
-            if !self.vm.skills.macros.contains_key(&id) { return id; }
+            if !self.vm.skills.macros.contains_key(&id) {
+                return id;
+            }
         }
     }
 
     fn calculate_fitness(&self, result: &[UVal], expected: &[UVal]) -> f64 {
-    if result.is_empty() || result.len() != expected.len() { return 0.0; }
-    let mut score = 0.0;
-    
-    for (got, want) in result.iter().zip(expected.iter()) {
-        match (got, want) {
-            // Existing Number comparison
-            (UVal::Number(a), UVal::Number(b)) => {
-                score += 1.0 / (1.0 + (a - b).abs());
-            },
-            // [FIX] Logic Comparison: Convert both to truthy booleans
-            _ => {
-                if got.is_truthy() == want.is_truthy() {
-                    score += 1.0;
+        if result.is_empty() || result.len() != expected.len() {
+            return 0.0;
+        }
+        let mut score = 0.0;
+
+        for (got, want) in result.iter().zip(expected.iter()) {
+            match (got, want) {
+                // Existing Number comparison
+                (UVal::Number(a), UVal::Number(b)) => {
+                    score += 1.0 / (1.0 + (a - b).abs());
+                }
+                // [FIX] Logic Comparison: Convert both to truthy booleans
+                _ => {
+                    if got.is_truthy() == want.is_truthy() {
+                        score += 1.0;
+                    }
                 }
             }
         }
+        score / expected.len() as f64
     }
-    score / expected.len() as f64
-}
 
     fn execute_program(&mut self, program: &mut Vec<f64>) -> Vec<UVal> {
         self.vm.stack.clear();

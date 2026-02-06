@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crate::logic::{decode_ops_for_validation, logic_of, validate_ops};
 use crate::memory::MemorySystem;
 use crate::plasticity::{Event, Plasticity, VMError};
 use crate::types::{SkillLibrary, UVal};
@@ -37,6 +38,7 @@ pub enum Op {
     Mod = 26,
     Inc = 27,
     Dec = 28,
+    Parse = 29,
 }
 
 impl Op {
@@ -70,6 +72,7 @@ impl Op {
             26 => Some(Op::Mod),
             27 => Some(Op::Inc),
             28 => Some(Op::Dec),
+            29 => Some(Op::Parse),
             _ => None,
         }
     }
@@ -106,7 +109,7 @@ impl SoulGainVM {
     pub fn new(program: Vec<f64>) -> Self {
         Self {
             program,
-            stack: Vec::new(),
+            stack: Vec::with_capacity(256),
             call_stack: Vec::new(),
             program_stack: Vec::new(),
             ip: 0,
@@ -114,10 +117,11 @@ impl SoulGainVM {
             plasticity: Plasticity::new(),
             last_event: None,
             skills: SkillLibrary::new(),
-            trace: Vec::new(),
+            trace: Vec::with_capacity(512),
         }
     }
 
+    #[inline(always)]
     fn decode_opcode(raw: f64) -> Result<i64, VMError> {
         if !raw.is_finite() {
             return Err(VMError::InvalidOpcode(-1));
@@ -167,7 +171,7 @@ impl SoulGainVM {
                 self.flush_trace();
                 break;
             }
-            let raw = self.program[self.ip];
+            let raw = unsafe { *self.program.get_unchecked(self.ip) };
             self.ip += 1;
             cycles += 1;
 
@@ -180,7 +184,10 @@ impl SoulGainVM {
             };
 
             if opcode >= SKILL_OPCODE_BASE {
-                let opcode_event = Event::Opcode { opcode, stack_depth: self.stack.len() };
+                let opcode_event = Event::Opcode {
+                    opcode,
+                    stack_depth: self.stack.len(),
+                };
                 self.record_event(opcode_event);
                 self.execute_skill(opcode);
                 continue;
@@ -211,8 +218,18 @@ impl SoulGainVM {
         }
     }
 
+    #[inline(always)]
     fn execute_opcode(&mut self, opcode: Op) -> bool {
-        let opcode_event = Event::Opcode { opcode: opcode.as_i64(), stack_depth: self.stack.len() };
+        let info = logic_of(opcode);
+        if info.stack_delta < 0 && self.stack.len() < (-info.stack_delta) as usize {
+            self.record_error(VMError::StackUnderflow);
+            return true;
+        }
+
+        let opcode_event = Event::Opcode {
+            opcode: opcode.as_i64(),
+            stack_depth: self.stack.len(),
+        };
         self.record_event(opcode_event);
 
         match opcode {
@@ -220,7 +237,7 @@ impl SoulGainVM {
                 if self.ip >= self.program.len() {
                     return false;
                 }
-                let v = self.program[self.ip];
+                let v = unsafe { *self.program.get_unchecked(self.ip) };
                 self.ip += 1;
                 self.stack.push(UVal::Number(v));
             }
@@ -320,7 +337,11 @@ impl SoulGainVM {
             Op::Intuition => {
                 if let Some(last_event) = self.last_event {
                     if let Some(next_event) = self.plasticity.best_next_event(last_event) {
-                        if let Event::Opcode { opcode: predicted_opcode, .. } = next_event {
+                        if let Event::Opcode {
+                            opcode: predicted_opcode,
+                            ..
+                        } = next_event
+                        {
                             if let Some(new_ip) = self.find_next_opcode(predicted_opcode) {
                                 self.ip = new_ip;
                             }
@@ -401,9 +422,17 @@ impl SoulGainVM {
             }
             Op::Evolve => {
                 if let Some(UVal::Number(id)) = self.stack.pop() {
-                    self.skills.define_skill(id as i64, self.program.clone());
-                    self.record_event(Event::Reward(100));
-                    self.flush_trace();
+                    let skill_program = self.program.clone();
+                    match decode_ops_for_validation(&skill_program).and_then(|ops| {
+                        validate_ops(&ops).map_err(|_| VMError::InvalidEvolve(id as i64))
+                    }) {
+                        Ok(_) => {
+                            self.skills.define_skill(id as i64, skill_program);
+                            self.record_event(Event::Reward(100));
+                            self.flush_trace();
+                        }
+                        Err(err) => self.record_error(err),
+                    }
                 } else {
                     self.record_error(VMError::InvalidEvolve(-1));
                 }
@@ -492,35 +521,37 @@ impl SoulGainVM {
                     self.record_error(VMError::InvalidOpcode(opcode.as_i64()));
                 }
             }
-            Op::Inc => {
-                match self.stack.pop() {
-                    Some(UVal::Number(n)) => self.stack.push(UVal::Number(n + 1.0)),
-                    Some(_) => self.record_error(VMError::InvalidOpcode(opcode.as_i64())),
-                    None => self.record_error(VMError::StackUnderflow),
-                }
-            }
-            Op::Dec => {
-                match self.stack.pop() {
-                    Some(UVal::Number(n)) => self.stack.push(UVal::Number(n - 1.0)),
-                    Some(_) => self.record_error(VMError::InvalidOpcode(opcode.as_i64())),
-                    None => self.record_error(VMError::StackUnderflow),
-                }
-            }
+            Op::Inc => match self.stack.pop() {
+                Some(UVal::Number(n)) => self.stack.push(UVal::Number(n + 1.0)),
+                Some(_) => self.record_error(VMError::InvalidOpcode(opcode.as_i64())),
+                None => self.record_error(VMError::StackUnderflow),
+            },
+            Op::Dec => match self.stack.pop() {
+                Some(UVal::Number(n)) => self.stack.push(UVal::Number(n - 1.0)),
+                Some(_) => self.record_error(VMError::InvalidOpcode(opcode.as_i64())),
+                None => self.record_error(VMError::StackUnderflow),
+            },
+            Op::Parse => match self.stack.pop() {
+                Some(UVal::String(text)) => match text.parse::<f64>() {
+                    Ok(n) => self.stack.push(UVal::Number(n)),
+                    Err(_) => self.stack.push(UVal::Nil),
+                },
+                Some(UVal::Number(n)) => self.stack.push(UVal::Number(n)),
+                Some(_) => self.stack.push(UVal::Nil),
+                None => self.record_error(VMError::StackUnderflow),
+            },
         }
 
         true
     }
 
     fn find_next_opcode(&self, target_opcode: i64) -> Option<usize> {
-        self.program
-            .iter()
-            .enumerate()
-            .find_map(|(idx, &raw)| {
-                if raw == target_opcode as f64 {
-                    Some(idx)
-                } else {
-                    None
-                }
-            })
+        self.program.iter().enumerate().find_map(|(idx, &raw)| {
+            if raw == target_opcode as f64 {
+                Some(idx)
+            } else {
+                None
+            }
+        })
     }
 }
