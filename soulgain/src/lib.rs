@@ -5,7 +5,9 @@ pub mod types;
 pub mod vm;
 // Add this line to src/lib.rs
 pub mod hypothesis;
+pub mod intuition;
 pub mod logic;
+pub mod run;
 pub use memory::MemorySystem;
 pub use plasticity::{Event, Plasticity, VMError};
 pub use types::{SkillLibrary, UVal};

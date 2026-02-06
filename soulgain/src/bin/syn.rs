@@ -1,103 +1,84 @@
-use std::sync::Arc;
-use std::time::Instant;
-
-use soulgain::logic::{aggregate_trace_logic, all_ops, category_of, logic_of, validate_ops};
+use rand::Rng;
+use soulgain::evolution::Trainer;
 use soulgain::types::UVal;
 use soulgain::vm::Op;
 use soulgain::SoulGainVM;
 
-fn run_cps_stress_test() {
-    let program = vec![
-        Op::Literal.as_f64(),
-        1.0,
-        Op::Literal.as_f64(),
-        2.0,
-        Op::Add.as_f64(),
-        Op::Drop.as_f64(),
-        Op::Jmp.as_f64(),
-        0.0,
-    ];
+// --- CONSTANTS FOR PERSISTENCE ---
+const SKILLS_PATH: &str = "skills.json";
+const PLASTICITY_PATH: &str = "plasticity.json";
+const ATTEMPTS_LIMIT: usize = 100_000; // Increased to 100k as requested
 
-    let mut vm = SoulGainVM::new(program);
-    let cycles = 2_000_000usize;
-    let start = Instant::now();
-    vm.run(cycles);
-    let elapsed = start.elapsed().as_secs_f64();
-    let cps = (cycles as f64 / elapsed) as u64;
-
-    println!("\n=== Stress Test Oracle (CPS) ===");
-    println!(
-        "cycles: {cycles}, elapsed: {:.3}s, cycles/sec: {cps}",
-        elapsed
-    );
+fn random_examples(n: usize, mul: bool) -> Vec<(Vec<UVal>, Vec<UVal>)> {
+    let mut rng = rand::thread_rng();
+    (0..n)
+        .map(|_| {
+            let a = rng.gen_range(1..25) as f64;
+            let b = rng.gen_range(1..25) as f64;
+            let m = [3.0, 5.0, 7.0, 11.0][rng.gen_range(0..4)];
+            let out = if mul { (a * b) % m } else { (a + b) % m };
+            (
+                vec![UVal::Number(a), UVal::Number(b), UVal::Number(m)],
+                vec![UVal::Number(out)],
+            )
+        })
+        .collect()
 }
 
-fn run_string_to_math_torture() {
-    let mut vm = SoulGainVM::new(vec![
-        Op::Parse.as_f64(),
-        Op::Literal.as_f64(),
-        5.0,
-        Op::Add.as_f64(),
-        Op::Halt.as_f64(),
-    ]);
-    vm.stack.push(UVal::String(Arc::new("37.5".to_string())));
-    vm.run(1000);
-    println!("\n=== String -> Math Torture ===");
-    println!("result stack: {:?}", vm.stack);
-}
-
-fn run_sort_torture() {
-    // Two-element compare/swap template form: [Over, Over, Gt, JmpIf(2), Swap]
-    let program = vec![
-        Op::Over.as_f64(),
-        Op::Over.as_f64(),
-        Op::Gt.as_f64(),
-        Op::JmpIf.as_f64(),
-        6.0,
-        Op::Halt.as_f64(),
-        Op::Swap.as_f64(),
-        Op::Halt.as_f64(),
-    ];
-
-    let mut vm = SoulGainVM::new(program);
-    vm.stack.push(UVal::Number(9.0));
-    vm.stack.push(UVal::Number(2.0));
-    vm.run(1000);
-    println!("\n=== Sort Torture (2-value compare/swap) ===");
-    println!("result stack: {:?}", vm.stack);
+fn print_separator(title: &str) {
+    println!("\n{}", "=".repeat(80));
+    println!("  {}", title);
+    println!("{}", "=".repeat(80));
 }
 
 fn main() {
-    println!("=== SoulGain Op Logic Table ===");
-    for op in all_ops() {
-        let info = logic_of(*op);
-        let category = category_of(*op);
-        println!(
-            "{:>10} ({:>2}) -> stack_delta: {:+}, may_branch: {}, category: {:?}",
-            format!("{:?}", op),
-            op.as_i64(),
-            info.stack_delta,
-            info.may_branch,
-            category
-        );
+    print_separator("SoulGain High-Intensity Synthesis & Persistence Run");
+
+    // Initialize VM and try to load existing state
+    let mut vm = SoulGainVM::new(vec![]);
+    
+    if let Ok(_) = vm.plasticity.load_from_file(PLASTICITY_PATH) {
+        println!("✓ Loaded existing plasticity from {}", PLASTICITY_PATH);
+    }
+    
+    // Note: SkillLibrary currently lacks a built-in load_from_file in the provided snippet,
+    // but the Trainer will populate new skills into the VM's registry.
+
+    let mut trainer = Trainer::new(vm, 15); // Increased max program length for complexity
+
+    // --- TEST 1: MODULAR ARITHMETIC ---
+    println!("\n[Task 1] Addition Modulo (Attempts: {})", ATTEMPTS_LIMIT);
+    let add_examples = random_examples(5, false);
+    if let Some(program) = trainer.synthesize(&add_examples, ATTEMPTS_LIMIT) {
+        println!("✓ Synthesized AddMod: {:?}", program);
     }
 
-    let valid_program = vec![Op::Literal, Op::Literal, Op::Add, Op::Halt];
-    let invalid_underflow = vec![Op::Add, Op::Halt];
-    let invalid_no_halt = vec![Op::Literal, Op::Dup];
+    // --- TEST 2: EVEN/ODD LOGIC ---
+    println!("\n[Task 2] Even/Odd Detection (Attempts: {})", ATTEMPTS_LIMIT);
+    let even_inputs = vec![vec![UVal::Number(4.0)], vec![UVal::Number(7.0)], vec![UVal::Number(12.0)]];
+    let even_examples: Vec<(Vec<UVal>, Vec<UVal>)> = even_inputs.iter().map(|input| {
+        let n = if let Some(UVal::Number(num)) = input.first() { *num } else { 0.0 };
+        (input.clone(), vec![UVal::Bool((n as i64) % 2 == 0)])
+    }).collect();
 
-    println!("\n=== Validation Examples ===");
-    println!("valid_program: {:?}", validate_ops(&valid_program));
-    println!("invalid_underflow: {:?}", validate_ops(&invalid_underflow));
-    println!("invalid_no_halt: {:?}", validate_ops(&invalid_no_halt));
+    if let Some(program) = trainer.synthesize(&even_examples, ATTEMPTS_LIMIT) {
+        println!("✓ Synthesized Even/Odd: {:?}", program);
+    }
 
-    println!("\n=== Trace Aggregation ===");
-    let trace = vec![Op::Literal, Op::Dup, Op::JmpIf, Op::Drop, Op::Halt];
-    let summary = aggregate_trace_logic(&trace);
-    println!("trace: {:?}", trace);
-    println!("summary: {:?}", summary);
+    // --- PERSISTENCE BLOCK ---
+    print_separator("SAVING BRAIN STATE");
+    
+    // Save Plasticity weights
+    match trainer.vm.plasticity.save_to_file(PLASTICITY_PATH) {
+        Ok(_) => println!("✓ Plasticity saved to {}", PLASTICITY_PATH),
+        Err(e) => println!("✗ Plasticity save failed: {}", e),
+    }
 
-    run_string_to_math_torture();
-    run_sort_torture();
-    run_cps_stress_test();
+    // To save skills.json, we manually serialize the SkillLibrary
+    let skills_file = std::fs::File::create(SKILLS_PATH).expect("Failed to create skills file");
+    if let Ok(_) = serde_json::to_writer_pretty(skills_file, &trainer.vm.skills) {
+        println!("✓ Skills saved to {}", SKILLS_PATH);
+    }
+
+    println!("\nRun complete. Check {} and {} for persisted data.", SKILLS_PATH, PLASTICITY_PATH);
 }

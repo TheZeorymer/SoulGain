@@ -1,7 +1,7 @@
 use crate::hypothesis::Hypothesis;
 use crate::plasticity::Event;
 use crate::types::UVal;
-use crate::{Op, SoulGainVM, SKILL_OPCODE_BASE};
+use crate::{Op, SKILL_OPCODE_BASE, SoulGainVM};
 use rand::Rng;
 use std::collections::HashSet;
 use std::fs::OpenOptions;
@@ -80,18 +80,22 @@ impl Trainer {
         0
     }
 
-    pub fn synthesize<O: Oracle + ?Sized>(
+    pub fn synthesize(
         &mut self,
-        oracle: &O,
-        input: Vec<UVal>,
+        examples: &[(Vec<UVal>, Vec<UVal>)],
         attempts_limit: usize,
     ) -> Option<Vec<f64>> {
-        let expected = oracle.evaluate(input.clone());
+        if examples.is_empty() {
+            return None;
+        }
+
+        let input = examples[0].0.clone();
+        let expected = examples[0].1.clone();
         let mut failed_attempts: HashSet<Vec<u64>> = HashSet::new();
         let mut best_program: Option<Vec<f64>> = None;
         let mut best_fitness = 0.0;
 
-        let input_preamble_len = input.len() * 2;
+        let input_preamble_len = 0;
         let shape_id = self.detect_problem_shape(&input, &expected);
 
         for current_len in 1..=self.max_program_len {
@@ -119,13 +123,6 @@ impl Trainer {
                     let hypothesis = Hypothesis::generate(current_len, &skills);
 
                     self.program_buf.clear();
-                    // Load inputs
-                    for value in &input {
-                        if let UVal::Number(n) = value {
-                            self.program_buf.push(Op::Literal.as_f64());
-                            self.program_buf.push(*n);
-                        }
-                    }
                     let start = self.program_buf.len();
                     self.program_buf.extend_from_slice(&hypothesis.logic);
 
@@ -151,7 +148,7 @@ impl Trainer {
                             variant.pop();
                         }
                         // Add a random op to grow it
-                        variant.push(self.choose_random_op_with_bias() as f64);
+                        variant.push(self.choose_random_op_with_bias(input.len()) as f64);
                         variant.push(Op::Halt.as_f64());
                         (variant, input_preamble_len, "EXTEND")
                     } else {
@@ -175,9 +172,8 @@ impl Trainer {
                 }
                 failed_attempts.insert(logic_bits);
 
-                let mut exec_buf = current_program.clone();
-                let result = self.execute_program(&mut exec_buf);
-                let fitness = self.calculate_fitness(&result, &expected);
+                let logic = current_program[logic_start..].to_vec();
+                let (fitness, solved_all) = self.evaluate_logic_on_examples(&logic, examples);
 
                 self.log_logic(
                     current_len,
@@ -198,7 +194,7 @@ impl Trainer {
                 }
 
                 // --- SUCCESS & PRUNING BLOCK ---
-                if fitness >= 0.9999 {
+                if solved_all {
                     let logic_slice = current_program[logic_start..].to_vec();
                     let mut clean_logic = logic_slice;
                     if clean_logic.last() == Some(&(Op::Halt.as_f64())) {
@@ -260,7 +256,7 @@ impl Trainer {
     fn generate_smart_skill_logic(&mut self, target_len: usize) -> i64 {
         let mut logic = Vec::new();
         for _ in 0..target_len {
-            let op = self.choose_random_op_with_bias();
+            let op = self.choose_random_op_with_bias(2);
             logic.push(op as f64);
         }
         self.register_or_find_skill(logic)
@@ -332,7 +328,7 @@ impl Trainer {
             let swap_idx = self.rng.gen_range(mutable_range.clone());
             program.swap(idx, swap_idx);
         } else {
-            let op = self.choose_random_op_with_bias();
+            let op = self.choose_random_op_with_bias(program.len().saturating_sub(logic_start));
             program[idx] = op as f64;
         }
     }
@@ -345,17 +341,10 @@ impl Trainer {
         shape_id: u8,
     ) -> (Event, usize) {
         self.program_buf.clear();
-        let mut stack_depth = 0usize;
-        for value in input {
-            if let UVal::Number(n) = value {
-                self.program_buf.push(Op::Literal.as_f64());
-                self.program_buf.push(*n);
-                stack_depth += 1;
-            }
-        }
+        let mut stack_depth = input.len();
         let logic_start = self.program_buf.len();
         let mut last_event = Event::Opcode {
-            opcode: Op::Literal.as_i64(),
+            opcode: Op::Intuition.as_i64(),
             stack_depth,
         };
         self.vm.plasticity.observe(Event::Context(shape_id));
@@ -365,7 +354,7 @@ impl Trainer {
 
         for _ in 0..target_len {
             let op = if random_bias {
-                self.choose_random_op_with_bias()
+                self.choose_random_op_with_bias(stack_depth)
             } else {
                 // [FIX] Pass the history
                 self.choose_op_with_stdp(last_event, stack_depth, &history, shape_id)
@@ -503,21 +492,23 @@ impl Trainer {
         ops[0]
     }
 
-    fn choose_random_op_with_bias(&mut self) -> i64 {
+    fn choose_random_op_with_bias(&mut self, stack_depth: usize) -> i64 {
         if !self.vm.skills.macros.is_empty() && self.rng.gen_bool(0.3) {
             let keys: Vec<_> = self.vm.skills.macros.keys().cloned().collect();
             if let Some(id) = keys.get(self.rng.gen_range(0..keys.len())) {
                 return *id;
             }
         }
-        let basic = [
+        let stack_favor = [
             Op::Add.as_i64(),
             Op::Sub.as_i64(),
             Op::Mul.as_i64(),
             Op::Mod.as_i64(),
+            Op::Add.as_i64(),
+            Op::Mul.as_i64(),
+            Op::Mod.as_i64(),
             Op::Inc.as_i64(),
             Op::Dec.as_i64(),
-            Op::Parse.as_i64(),
             Op::Eq.as_i64(),
             Op::Gt.as_i64(),
             Op::Not.as_i64(),
@@ -539,7 +530,59 @@ impl Trainer {
             Op::Reward.as_i64(),
             Op::Evolve.as_i64(),
         ];
-        basic[self.rng.gen_range(0..basic.len())]
+
+        let with_literal = [
+            Op::Literal.as_i64(),
+            Op::Parse.as_i64(),
+            Op::Add.as_i64(),
+            Op::Sub.as_i64(),
+            Op::Mul.as_i64(),
+            Op::Mod.as_i64(),
+            Op::Dup.as_i64(),
+            Op::Over.as_i64(),
+            Op::Drop.as_i64(),
+        ];
+
+        let pool = if stack_depth == 0 {
+            &with_literal[..]
+        } else {
+            &stack_favor[..]
+        };
+        pool[self.rng.gen_range(0..pool.len())]
+    }
+
+    fn evaluate_logic_on_examples(
+        &mut self,
+        logic: &[f64],
+        examples: &[(Vec<UVal>, Vec<UVal>)],
+    ) -> (f64, bool) {
+        let mut total = 0.0;
+        let mut solved_all = true;
+
+        for (input, expected) in examples {
+            let mut program = self.materialize_program(input, logic);
+            self.vm.stack.clear();
+            for v in input {
+                self.vm.stack.push(v.clone());
+            }
+            let result = self.execute_program(&mut program);
+            let fitness = self.calculate_fitness(&result, expected);
+            total += fitness;
+
+            if fitness < 0.9999 {
+                solved_all = false;
+            }
+        }
+
+        (total / examples.len() as f64, solved_all)
+    }
+
+    fn materialize_program(&self, _input: &[UVal], logic: &[f64]) -> Vec<f64> {
+        let mut program = logic.to_vec();
+        if program.last() != Some(&Op::Halt.as_f64()) {
+            program.push(Op::Halt.as_f64());
+        }
+        program
     }
 
     fn imprint_skill(&self, op_id: i64, sample_input: &[UVal]) {
@@ -596,7 +639,6 @@ impl Trainer {
     }
 
     fn execute_program(&mut self, program: &mut Vec<f64>) -> Vec<UVal> {
-        self.vm.stack.clear();
         self.vm.ip = 0;
         let previous = std::mem::replace(&mut self.vm.program, std::mem::take(program));
         self.vm.run(10_000);

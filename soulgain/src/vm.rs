@@ -1,5 +1,7 @@
+use std::collections::VecDeque;
 use std::sync::Arc;
 
+use crate::intuition::{IntuitionEngine, SkillOutcome, ValueKind};
 use crate::logic::{decode_ops_for_validation, logic_of, validate_ops};
 use crate::memory::MemorySystem;
 use crate::plasticity::{Event, Plasticity, VMError};
@@ -96,13 +98,32 @@ pub struct SoulGainVM {
     pub plasticity: Plasticity,
     pub last_event: Option<Event>,
     pub skills: SkillLibrary,
+    pub intuition: IntuitionEngine,
     trace: Vec<Event>,
+    recent_opcodes: VecDeque<i64>,
+    tick: u64,
+    total_reward: f64,
+    error_count: u64,
+    pub current_task_tag: Option<u64>,
 }
 
 #[derive(Debug)]
 struct ProgramFrame {
     program: Vec<f64>,
     ip: usize,
+    skill_invocation: Option<SkillInvocation>,
+}
+
+#[derive(Debug, Clone)]
+struct SkillInvocation {
+    skill_id: i64,
+    reward_before: f64,
+    errors_before: u64,
+    task_tag: Option<u64>,
+    context_top_types: [Option<ValueKind>; 3],
+    data_hash: u64,
+    feature_hash: u64,
+    stack_hash: u64,
 }
 
 impl SoulGainVM {
@@ -117,8 +138,18 @@ impl SoulGainVM {
             plasticity: Plasticity::new(),
             last_event: None,
             skills: SkillLibrary::new(),
+            intuition: IntuitionEngine::default(),
             trace: Vec::with_capacity(512),
+            recent_opcodes: VecDeque::with_capacity(8),
+            tick: 0,
+            total_reward: 0.0,
+            error_count: 0,
+            current_task_tag: None,
         }
+    }
+
+    pub fn set_task_tag(&mut self, task_tag: Option<u64>) {
+        self.current_task_tag = task_tag;
     }
 
     #[inline(always)]
@@ -139,6 +170,7 @@ impl SoulGainVM {
     }
 
     fn record_error(&mut self, error: VMError) {
+        self.error_count = self.error_count.saturating_add(1);
         self.record_event(Event::Error(error));
         self.flush_trace();
     }
@@ -153,6 +185,25 @@ impl SoulGainVM {
 
     fn restore_program(&mut self) -> bool {
         if let Some(frame) = self.program_stack.pop() {
+            if let Some(invocation) = frame.skill_invocation {
+                let success = self.error_count == invocation.errors_before;
+                let reward_delta = self.total_reward - invocation.reward_before;
+                self.intuition
+                    .settle_pending_credits(self.tick, self.total_reward);
+                self.intuition.update_after_execution(
+                    invocation.skill_id,
+                    SkillOutcome {
+                        success,
+                        reward_delta,
+                        used_tick: self.tick,
+                        task_tag: invocation.task_tag,
+                        context_top_types: invocation.context_top_types,
+                        data_hash: invocation.data_hash,
+                        feature_hash: invocation.feature_hash,
+                        stack_hash: invocation.stack_hash,
+                    },
+                );
+            }
             self.program = frame.program;
             self.ip = frame.ip;
             true
@@ -174,6 +225,7 @@ impl SoulGainVM {
             let raw = unsafe { *self.program.get_unchecked(self.ip) };
             self.ip += 1;
             cycles += 1;
+            self.tick = self.tick.saturating_add(1);
 
             let opcode = match Self::decode_opcode(raw) {
                 Ok(op) => op,
@@ -189,6 +241,7 @@ impl SoulGainVM {
                     stack_depth: self.stack.len(),
                 };
                 self.record_event(opcode_event);
+                self.push_recent_opcode(opcode);
                 self.execute_skill(opcode);
                 continue;
             }
@@ -206,9 +259,28 @@ impl SoulGainVM {
 
     fn execute_skill(&mut self, opcode: i64) {
         if let Some(macro_code) = self.skills.get_skill(opcode).cloned() {
+            let ctx = self.intuition.build_context(
+                &self.stack,
+                &self.recent_opcodes,
+                self.current_task_tag,
+            );
+            self.intuition.bootstrap_pattern_if_empty(opcode, &ctx);
+            self.intuition
+                .issue_pending_credit(opcode, self.tick, self.total_reward);
+
             let frame = ProgramFrame {
                 program: std::mem::take(&mut self.program),
                 ip: self.ip,
+                skill_invocation: Some(SkillInvocation {
+                    skill_id: opcode,
+                    reward_before: self.total_reward,
+                    errors_before: self.error_count,
+                    task_tag: ctx.task_tag,
+                    context_top_types: ctx.top_types,
+                    data_hash: ctx.data_hash,
+                    feature_hash: ctx.feature_hash,
+                    stack_hash: ctx.stack_hash,
+                }),
             };
             self.program_stack.push(frame);
             self.program = macro_code;
@@ -216,6 +288,13 @@ impl SoulGainVM {
         } else {
             self.record_error(VMError::InvalidOpcode(opcode));
         }
+    }
+
+    fn push_recent_opcode(&mut self, opcode: i64) {
+        if self.recent_opcodes.len() >= 6 {
+            let _ = self.recent_opcodes.pop_front();
+        }
+        self.recent_opcodes.push_back(opcode);
     }
 
     #[inline(always)]
@@ -231,6 +310,7 @@ impl SoulGainVM {
             stack_depth: self.stack.len(),
         };
         self.record_event(opcode_event);
+        self.push_recent_opcode(opcode.as_i64());
 
         match opcode {
             Op::Literal => {
@@ -335,18 +415,14 @@ impl SoulGainVM {
                 }
             }
             Op::Intuition => {
-                if let Some(last_event) = self.last_event {
-                    if let Some(next_event) = self.plasticity.best_next_event(last_event) {
-                        if let Event::Opcode {
-                            opcode: predicted_opcode,
-                            ..
-                        } = next_event
-                        {
-                            if let Some(new_ip) = self.find_next_opcode(predicted_opcode) {
-                                self.ip = new_ip;
-                            }
-                        }
-                    }
+                let candidates: Vec<i64> = self.skills.macros.keys().copied().collect();
+                let ctx = self.intuition.build_context(
+                    &self.stack,
+                    &self.recent_opcodes,
+                    self.current_task_tag,
+                );
+                if let Some(skill_id) = self.intuition.select_skill(&ctx, &candidates, self.tick) {
+                    self.execute_skill(skill_id);
                 }
             }
             Op::Jmp => {
@@ -417,6 +493,7 @@ impl SoulGainVM {
                 }
             }
             Op::Reward => {
+                self.total_reward += 100.0;
                 self.record_event(Event::Reward(100));
                 self.flush_trace();
             }
