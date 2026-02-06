@@ -2,6 +2,8 @@ use std::collections::{HashMap, VecDeque};
 
 use crate::types::UVal;
 
+pub type SkillId = i64;
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum ValueKind {
     Nil,
@@ -11,28 +13,25 @@ pub enum ValueKind {
     Object,
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub enum NumberBand {
-    Neg,
-    Zero,
-    Small,
-    Medium,
-    Large,
-}
-
 #[derive(Clone, Debug)]
 pub struct ContextSnapshot {
-    pub depth_bucket: u8,
+    pub task_tag: Option<u64>,
+    pub stack_depth: usize,
     pub top_types: [Option<ValueKind>; 3],
-    pub top_number_bands: [Option<NumberBand>; 3],
     pub recent_opcodes: Vec<i64>,
+    pub stack_hash: u64,
 }
 
 #[derive(Clone, Debug)]
 pub struct SkillPattern {
-    pub min_depth: u8,
-    pub max_depth: u8,
-    pub required_top_types: [Option<ValueKind>; 3],
+    pub expected_types: [Option<ValueKind>; 3],
+    pub confidence: f64,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct TaskStats {
+    pub attempts: u64,
+    pub successes: u64,
 }
 
 #[derive(Clone, Debug)]
@@ -43,7 +42,6 @@ pub struct SkillStats {
     pub avg_reward_delta: f64,
     pub base_confidence: f64,
     pub last_used_tick: u64,
-    pub times_used_recent_window: u32,
 }
 
 impl Default for SkillStats {
@@ -55,24 +53,40 @@ impl Default for SkillStats {
             avg_reward_delta: 0.0,
             base_confidence: 0.5,
             last_used_tick: 0,
-            times_used_recent_window: 0,
         }
     }
 }
 
 #[derive(Clone, Debug)]
+pub struct FailureSignature {
+    pub stack_hash: u64,
+    pub task_tag: Option<u64>,
+}
+
+#[derive(Clone, Debug)]
+pub struct PendingCredit {
+    pub skill_id: SkillId,
+    pub issued_at_tick: u64,
+    pub reward_baseline: f64,
+}
+
+#[derive(Clone, Debug)]
 pub struct SkillMetadata {
-    pub skill_id: i64,
+    pub skill_id: SkillId,
     pub pattern: SkillPattern,
     pub stats: SkillStats,
+    pub per_task: HashMap<u64, TaskStats>,
+    pub recent_failures: VecDeque<FailureSignature>,
 }
 
 #[derive(Clone, Debug)]
 pub struct SkillOutcome {
     pub success: bool,
     pub reward_delta: f64,
-    pub stack_match_after: bool,
     pub used_tick: u64,
+    pub task_tag: Option<u64>,
+    pub context_top_types: [Option<ValueKind>; 3],
+    pub stack_hash: u64,
 }
 
 #[derive(Clone, Debug)]
@@ -83,26 +97,30 @@ pub struct IntuitionWeights {
     pub w_conf: f64,
     pub w_decay: f64,
     pub w_explore: f64,
+    pub w_task: f64,
 }
 
 impl Default for IntuitionWeights {
     fn default() -> Self {
         Self {
-            w_match: 0.45,
+            w_match: 0.38,
             w_success: 0.2,
-            w_reward: 0.15,
+            w_reward: 0.16,
             w_conf: 0.1,
-            w_decay: 0.07,
-            w_explore: 0.03,
+            w_decay: 0.06,
+            w_explore: 0.06,
+            w_task: 0.04,
         }
     }
 }
 
 pub struct IntuitionEngine {
-    pub skill_meta: HashMap<i64, SkillMetadata>,
+    pub skill_meta: HashMap<SkillId, SkillMetadata>,
     pub weights: IntuitionWeights,
     pub gate_threshold: f64,
     pub deterministic_mode: bool,
+    pub decay_tau_ticks: f64,
+    pub pending_credits: VecDeque<PendingCredit>,
     rng_state: u64,
 }
 
@@ -111,52 +129,56 @@ impl Default for IntuitionEngine {
         Self {
             skill_meta: HashMap::new(),
             weights: IntuitionWeights::default(),
-            gate_threshold: 0.35,
+            gate_threshold: 0.2,
             deterministic_mode: false,
+            decay_tau_ticks: 12.0,
+            pending_credits: VecDeque::new(),
             rng_state: 0x9E37_79B9_7F4A_7C15,
         }
     }
 }
 
 impl IntuitionEngine {
-    pub fn build_context(&self, stack: &[UVal], recent: &VecDeque<i64>) -> ContextSnapshot {
+    pub fn build_context(
+        &self,
+        stack: &[UVal],
+        recent: &VecDeque<i64>,
+        task_tag: Option<u64>,
+    ) -> ContextSnapshot {
         let mut top_types: [Option<ValueKind>; 3] = [None, None, None];
-        let mut top_number_bands: [Option<NumberBand>; 3] = [None, None, None];
-
         for (idx, value) in stack.iter().rev().take(3).enumerate() {
             top_types[idx] = Some(value_kind(value));
-            top_number_bands[idx] = number_band(value);
         }
 
         ContextSnapshot {
-            depth_bucket: std::cmp::min(stack.len(), 5) as u8,
-            top_types,
-            top_number_bands,
+            task_tag,
+            stack_depth: stack.len(),
+            top_types: top_types.clone(),
             recent_opcodes: recent.iter().copied().collect(),
+            stack_hash: stack_signature_hash(stack.len(), &top_types),
         }
     }
 
-    pub fn ensure_skill_known(&mut self, skill_id: i64) {
+    pub fn ensure_skill_known(&mut self, skill_id: SkillId) {
         self.skill_meta
             .entry(skill_id)
             .or_insert_with(|| SkillMetadata {
                 skill_id,
                 pattern: SkillPattern {
-                    min_depth: 0,
-                    max_depth: 5,
-                    required_top_types: [None, None, None],
+                    expected_types: [None, None, None],
+                    confidence: 0.5,
                 },
                 stats: SkillStats::default(),
+                per_task: HashMap::new(),
+                recent_failures: VecDeque::with_capacity(16),
             });
     }
 
-    pub fn bootstrap_pattern_if_empty(&mut self, skill_id: i64, ctx: &ContextSnapshot) {
+    pub fn bootstrap_pattern_if_empty(&mut self, skill_id: SkillId, ctx: &ContextSnapshot) {
         self.ensure_skill_known(skill_id);
         if let Some(meta) = self.skill_meta.get_mut(&skill_id) {
-            if meta.pattern.required_top_types == [None, None, None] {
-                meta.pattern.required_top_types = ctx.top_types.clone();
-                meta.pattern.min_depth = ctx.depth_bucket;
-                meta.pattern.max_depth = 5;
+            if meta.pattern.expected_types == [None, None, None] {
+                meta.pattern.expected_types = ctx.top_types.clone();
             }
         }
     }
@@ -164,21 +186,32 @@ impl IntuitionEngine {
     pub fn select_skill(
         &mut self,
         ctx: &ContextSnapshot,
-        candidates: &[i64],
+        candidates: &[SkillId],
         tick: u64,
-    ) -> Option<i64> {
-        let mut scored: Vec<(i64, f64)> = Vec::new();
+    ) -> Option<SkillId> {
+        let total_attempts: u64 = self
+            .skill_meta
+            .values()
+            .map(|m| m.stats.attempts)
+            .sum::<u64>()
+            + 1;
+        let mut scored: Vec<(SkillId, f64)> = Vec::new();
 
         for skill_id in candidates {
             self.ensure_skill_known(*skill_id);
             let Some(meta) = self.skill_meta.get(skill_id) else {
                 continue;
             };
+
+            if self.matches_failure_memory(meta, ctx) {
+                continue;
+            }
+
             let pattern = self.pattern_match(ctx, &meta.pattern);
             if pattern < self.gate_threshold {
                 continue;
             }
-            let score = self.applicability_score(ctx, meta, tick, pattern);
+            let score = self.applicability_score(meta, tick, pattern, ctx.task_tag, total_attempts);
             if score > 0.0 {
                 scored.push((*skill_id, score));
             }
@@ -196,7 +229,44 @@ impl IntuitionEngine {
         self.weighted_pick(&scored)
     }
 
-    pub fn update_after_execution(&mut self, skill_id: i64, outcome: SkillOutcome) {
+    pub fn issue_pending_credit(&mut self, skill_id: SkillId, tick: u64, reward_baseline: f64) {
+        if self.pending_credits.len() >= 64 {
+            let _ = self.pending_credits.pop_front();
+        }
+        self.pending_credits.push_back(PendingCredit {
+            skill_id,
+            issued_at_tick: tick,
+            reward_baseline,
+        });
+    }
+
+    pub fn settle_pending_credits(&mut self, current_tick: u64, current_total_reward: f64) {
+        let mut retained = VecDeque::with_capacity(self.pending_credits.len());
+        while let Some(pending) = self.pending_credits.pop_front() {
+            let age = current_tick.saturating_sub(pending.issued_at_tick);
+            if age > 64 {
+                continue;
+            }
+
+            let decay = self.recency_decay(age);
+            let delayed_reward = (current_total_reward - pending.reward_baseline) * decay;
+            if delayed_reward.abs() > f64::EPSILON {
+                self.ensure_skill_known(pending.skill_id);
+                if let Some(meta) = self.skill_meta.get_mut(&pending.skill_id) {
+                    let alpha = 0.2;
+                    meta.stats.avg_reward_delta =
+                        (1.0 - alpha) * meta.stats.avg_reward_delta + alpha * delayed_reward;
+                }
+            }
+
+            if age < 16 {
+                retained.push_back(pending);
+            }
+        }
+        self.pending_credits = retained;
+    }
+
+    pub fn update_after_execution(&mut self, skill_id: SkillId, outcome: SkillOutcome) {
         self.ensure_skill_known(skill_id);
         let Some(meta) = self.skill_meta.get_mut(&skill_id) else {
             return;
@@ -205,75 +275,101 @@ impl IntuitionEngine {
         meta.stats.attempts += 1;
         if outcome.success {
             meta.stats.successes += 1;
-            meta.stats.base_confidence = (meta.stats.base_confidence + 0.03).clamp(0.05, 0.95);
+            meta.pattern = adapt_pattern_success(&meta.pattern, &outcome.context_top_types);
+            meta.stats.base_confidence = (meta.stats.base_confidence + 0.03).clamp(0.05, 0.98);
         } else {
             meta.stats.failures += 1;
-            meta.stats.base_confidence = (meta.stats.base_confidence - 0.04).clamp(0.05, 0.95);
+            meta.pattern = adapt_pattern_failure(&meta.pattern, &outcome.context_top_types);
+            meta.stats.base_confidence = (meta.stats.base_confidence - 0.05).clamp(0.05, 0.98);
+
+            if meta.recent_failures.len() >= 16 {
+                let _ = meta.recent_failures.pop_front();
+            }
+            meta.recent_failures.push_back(FailureSignature {
+                stack_hash: outcome.stack_hash,
+                task_tag: outcome.task_tag,
+            });
+        }
+
+        if let Some(tag) = outcome.task_tag {
+            let entry = meta.per_task.entry(tag).or_default();
+            entry.attempts += 1;
+            if outcome.success {
+                entry.successes += 1;
+            }
         }
 
         let alpha = 0.25;
         meta.stats.avg_reward_delta =
             (1.0 - alpha) * meta.stats.avg_reward_delta + alpha * outcome.reward_delta;
 
-        if !outcome.stack_match_after {
-            meta.stats.base_confidence = (meta.stats.base_confidence - 0.02).clamp(0.05, 0.95);
-        }
-
         meta.stats.last_used_tick = outcome.used_tick;
-        meta.stats.times_used_recent_window = meta.stats.times_used_recent_window.saturating_add(1);
+    }
+
+    fn matches_failure_memory(&self, meta: &SkillMetadata, ctx: &ContextSnapshot) -> bool {
+        meta.recent_failures.iter().any(|f| {
+            f.stack_hash == ctx.stack_hash && (f.task_tag.is_none() || f.task_tag == ctx.task_tag)
+        })
     }
 
     fn pattern_match(&self, ctx: &ContextSnapshot, pattern: &SkillPattern) -> f64 {
-        let mut score: f64 = 0.0;
-        if ctx.depth_bucket >= pattern.min_depth && ctx.depth_bucket <= pattern.max_depth {
-            score += 0.4;
-        }
-
-        let mut type_matches = 0.0;
-        let mut total = 0.0;
+        let mut similarity: f64 = 0.0;
+        let mut total: f64 = 0.0;
         for i in 0..3 {
-            if let Some(required) = &pattern.required_top_types[i] {
+            if let Some(expected) = &pattern.expected_types[i] {
                 total += 1.0;
-                if ctx.top_types[i].as_ref() == Some(required) {
-                    type_matches += 1.0;
+                if ctx.top_types[i].as_ref() == Some(expected) {
+                    similarity += 1.0;
                 }
             }
         }
-        if total == 0.0 {
-            score += 0.6;
-        } else {
-            score += 0.6 * (type_matches / total);
-        }
 
-        score.clamp(0.0, 1.0)
+        let base = if total == 0.0 {
+            0.5
+        } else {
+            similarity / total
+        };
+        (base * pattern.confidence).clamp(0.0, 1.0)
     }
 
     fn applicability_score(
         &self,
-        _ctx: &ContextSnapshot,
         meta: &SkillMetadata,
         tick: u64,
         pattern_match: f64,
+        task_tag: Option<u64>,
+        total_attempts: u64,
     ) -> f64 {
         let success_rate =
             meta.stats.successes as f64 / std::cmp::max(1, meta.stats.attempts) as f64;
         let normalized_reward = (meta.stats.avg_reward_delta / 100.0).clamp(-1.0, 1.0);
-        let recency_penalty = if tick.saturating_sub(meta.stats.last_used_tick) <= 8 {
-            1.0
-        } else {
-            0.0
-        };
-        let exploration_bonus = 1.0 / (1.0 + meta.stats.attempts as f64);
+        let age = tick.saturating_sub(meta.stats.last_used_tick);
+        let recency_penalty = 1.0 - self.recency_decay(age);
+        let task_affinity = self.task_affinity(meta, task_tag);
+        let explore = exploration_bonus(meta, total_attempts);
 
         self.weights.w_match * pattern_match
             + self.weights.w_success * success_rate
             + self.weights.w_reward * normalized_reward
             + self.weights.w_conf * meta.stats.base_confidence
             - self.weights.w_decay * recency_penalty
-            + self.weights.w_explore * exploration_bonus
+            + self.weights.w_explore * explore
+            + self.weights.w_task * task_affinity
     }
 
-    fn weighted_pick(&mut self, scored: &[(i64, f64)]) -> Option<i64> {
+    fn task_affinity(&self, meta: &SkillMetadata, task_tag: Option<u64>) -> f64 {
+        let Some(tag) = task_tag else { return 0.0 };
+        let Some(task) = meta.per_task.get(&tag) else {
+            return 0.0;
+        };
+        task.successes as f64 / std::cmp::max(1, task.attempts) as f64
+    }
+
+    fn recency_decay(&self, age_ticks: u64) -> f64 {
+        (-(age_ticks as f64) / self.decay_tau_ticks).exp()
+    }
+
+    fn weighted_pick(&mut self, scored: &[(SkillId, f64)]) -> Option<SkillId> {
         let total: f64 = scored.iter().map(|(_, s)| *s).sum();
         if total <= 0.0 {
             return scored
@@ -302,6 +398,43 @@ impl IntuitionEngine {
     }
 }
 
+pub fn exploration_bonus(skill: &SkillMetadata, total_attempts: u64) -> f64 {
+    let attempts = std::cmp::max(1, skill.stats.attempts) as f64;
+    let total = std::cmp::max(2, total_attempts) as f64;
+    let uncertainty = (1.0 - skill.pattern.confidence).clamp(0.0, 1.0);
+    (2.0 * total.ln() / attempts).sqrt() * uncertainty
+}
+
+fn adapt_pattern_success(
+    pattern: &SkillPattern,
+    observed: &[Option<ValueKind>; 3],
+) -> SkillPattern {
+    let mut next = pattern.clone();
+    for (idx, observed_ty) in observed.iter().enumerate() {
+        if next.expected_types[idx].is_none() {
+            next.expected_types[idx] = observed_ty.clone();
+        }
+    }
+    next.confidence = (next.confidence + 0.03).clamp(0.05, 0.98);
+    next
+}
+
+fn adapt_pattern_failure(
+    pattern: &SkillPattern,
+    observed: &[Option<ValueKind>; 3],
+) -> SkillPattern {
+    let mut next = pattern.clone();
+    for (idx, observed_ty) in observed.iter().enumerate() {
+        if let Some(expected) = &next.expected_types[idx] {
+            if Some(expected) != observed_ty.as_ref() {
+                next.expected_types[idx] = None;
+            }
+        }
+    }
+    next.confidence = (next.confidence - 0.04).clamp(0.05, 0.98);
+    next
+}
+
 fn value_kind(v: &UVal) -> ValueKind {
     match v {
         UVal::Nil => ValueKind::Nil,
@@ -312,17 +445,21 @@ fn value_kind(v: &UVal) -> ValueKind {
     }
 }
 
-fn number_band(v: &UVal) -> Option<NumberBand> {
-    let UVal::Number(n) = v else { return None };
-    Some(if *n < 0.0 {
-        NumberBand::Neg
-    } else if *n == 0.0 {
-        NumberBand::Zero
-    } else if *n < 10.0 {
-        NumberBand::Small
-    } else if *n < 1000.0 {
-        NumberBand::Medium
-    } else {
-        NumberBand::Large
-    })
+fn stack_signature_hash(depth: usize, top_types: &[Option<ValueKind>; 3]) -> u64 {
+    let mut h = 0xcbf29ce484222325u64;
+    h ^= depth as u64;
+    h = h.wrapping_mul(0x100000001b3);
+    for t in top_types {
+        let code = match t {
+            None => 0u64,
+            Some(ValueKind::Nil) => 1,
+            Some(ValueKind::Bool) => 2,
+            Some(ValueKind::Number) => 3,
+            Some(ValueKind::String) => 4,
+            Some(ValueKind::Object) => 5,
+        };
+        h ^= code;
+        h = h.wrapping_mul(0x100000001b3);
+    }
+    h
 }

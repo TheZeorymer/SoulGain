@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use std::sync::Arc;
 
-use crate::intuition::{IntuitionEngine, SkillOutcome};
+use crate::intuition::{IntuitionEngine, SkillOutcome, ValueKind};
 use crate::logic::{decode_ops_for_validation, logic_of, validate_ops};
 use crate::memory::MemorySystem;
 use crate::plasticity::{Event, Plasticity, VMError};
@@ -104,6 +104,7 @@ pub struct SoulGainVM {
     tick: u64,
     total_reward: f64,
     error_count: u64,
+    pub current_task_tag: Option<u64>,
 }
 
 #[derive(Debug)]
@@ -113,12 +114,14 @@ struct ProgramFrame {
     skill_invocation: Option<SkillInvocation>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 struct SkillInvocation {
     skill_id: i64,
     reward_before: f64,
     errors_before: u64,
-    expected_depth_min: u8,
+    task_tag: Option<u64>,
+    context_top_types: [Option<ValueKind>; 3],
+    stack_hash: u64,
 }
 
 impl SoulGainVM {
@@ -139,7 +142,12 @@ impl SoulGainVM {
             tick: 0,
             total_reward: 0.0,
             error_count: 0,
+            current_task_tag: None,
         }
+    }
+
+    pub fn set_task_tag(&mut self, task_tag: Option<u64>) {
+        self.current_task_tag = task_tag;
     }
 
     #[inline(always)]
@@ -178,14 +186,17 @@ impl SoulGainVM {
             if let Some(invocation) = frame.skill_invocation {
                 let success = self.error_count == invocation.errors_before;
                 let reward_delta = self.total_reward - invocation.reward_before;
-                let stack_match_after = self.stack.len() >= invocation.expected_depth_min as usize;
+                self.intuition
+                    .settle_pending_credits(self.tick, self.total_reward);
                 self.intuition.update_after_execution(
                     invocation.skill_id,
                     SkillOutcome {
                         success,
                         reward_delta,
-                        stack_match_after,
                         used_tick: self.tick,
+                        task_tag: invocation.task_tag,
+                        context_top_types: invocation.context_top_types,
+                        stack_hash: invocation.stack_hash,
                     },
                 );
             }
@@ -244,16 +255,14 @@ impl SoulGainVM {
 
     fn execute_skill(&mut self, opcode: i64) {
         if let Some(macro_code) = self.skills.get_skill(opcode).cloned() {
-            let ctx = self
-                .intuition
-                .build_context(&self.stack, &self.recent_opcodes);
+            let ctx = self.intuition.build_context(
+                &self.stack,
+                &self.recent_opcodes,
+                self.current_task_tag,
+            );
             self.intuition.bootstrap_pattern_if_empty(opcode, &ctx);
-            let expected_depth_min = self
-                .intuition
-                .skill_meta
-                .get(&opcode)
-                .map(|m| m.pattern.min_depth)
-                .unwrap_or(0);
+            self.intuition
+                .issue_pending_credit(opcode, self.tick, self.total_reward);
 
             let frame = ProgramFrame {
                 program: std::mem::take(&mut self.program),
@@ -262,7 +271,9 @@ impl SoulGainVM {
                     skill_id: opcode,
                     reward_before: self.total_reward,
                     errors_before: self.error_count,
-                    expected_depth_min,
+                    task_tag: ctx.task_tag,
+                    context_top_types: ctx.top_types,
+                    stack_hash: ctx.stack_hash,
                 }),
             };
             self.program_stack.push(frame);
@@ -399,9 +410,11 @@ impl SoulGainVM {
             }
             Op::Intuition => {
                 let candidates: Vec<i64> = self.skills.macros.keys().copied().collect();
-                let ctx = self
-                    .intuition
-                    .build_context(&self.stack, &self.recent_opcodes);
+                let ctx = self.intuition.build_context(
+                    &self.stack,
+                    &self.recent_opcodes,
+                    self.current_task_tag,
+                );
                 if let Some(skill_id) = self.intuition.select_skill(&ctx, &candidates, self.tick) {
                     self.execute_skill(skill_id);
                 }
