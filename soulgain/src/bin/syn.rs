@@ -1,10 +1,12 @@
 use std::sync::Arc;
 use std::time::Instant;
 
+use rand::Rng;
+use soulgain::SoulGainVM;
+use soulgain::evolution::Trainer;
 use soulgain::logic::{aggregate_trace_logic, all_ops, category_of, logic_of, validate_ops};
 use soulgain::types::UVal;
 use soulgain::vm::Op;
-use soulgain::SoulGainVM;
 
 fn run_cps_stress_test() {
     let program = vec![
@@ -47,7 +49,6 @@ fn run_string_to_math_torture() {
 }
 
 fn run_sort_torture() {
-    // Two-element compare/swap template form: [Over, Over, Gt, JmpIf(2), Swap]
     let program = vec![
         Op::Over.as_f64(),
         Op::Over.as_f64(),
@@ -65,6 +66,51 @@ fn run_sort_torture() {
     vm.run(1000);
     println!("\n=== Sort Torture (2-value compare/swap) ===");
     println!("result stack: {:?}", vm.stack);
+}
+
+fn generate_examples<F>(n: usize, f: F) -> Vec<(Vec<UVal>, Vec<UVal>)>
+where
+    F: Fn(f64, f64) -> f64,
+{
+    let mut rng = rand::thread_rng();
+    (0..n)
+        .map(|_| {
+            let a = rng.gen_range(1..20) as f64;
+            let b = rng.gen_range(1..20) as f64;
+            let m = [3.0, 4.0, 5.0, 7.0][rng.gen_range(0..4)];
+            let out = f(a + b, m);
+            (
+                vec![UVal::Number(a), UVal::Number(b), UVal::Number(m)],
+                vec![UVal::Number(out)],
+            )
+        })
+        .collect()
+}
+
+fn run_synthesis_pretrain() {
+    println!("\n=== Synthesis Pretrain (multi-example) ===");
+    let vm = SoulGainVM::new(vec![]);
+    let mut trainer = Trainer::new(vm, 10);
+
+    let add_mod_examples = generate_examples(4, |sum, m| sum % m);
+    let mul_mod_examples: Vec<(Vec<UVal>, Vec<UVal>)> = add_mod_examples
+        .iter()
+        .map(|(input, _)| {
+            let (a, b, m) = match (&input[0], &input[1], &input[2]) {
+                (UVal::Number(a), UVal::Number(b), UVal::Number(m)) => (*a, *b, *m),
+                _ => (1.0, 1.0, 2.0),
+            };
+            (input.clone(), vec![UVal::Number((a * b) % m)])
+        })
+        .collect();
+
+    let add_mod_prog = trainer.synthesize(&add_mod_examples, 120);
+    let mul_mod_prog = trainer.synthesize(&mul_mod_examples, 120);
+
+    println!("AddMod examples: {:?}", add_mod_examples);
+    println!("AddMod synthesized: {:?}", add_mod_prog);
+    println!("MulMod examples: {:?}", mul_mod_examples);
+    println!("MulMod synthesized: {:?}", mul_mod_prog);
 }
 
 fn main() {
@@ -99,5 +145,6 @@ fn main() {
 
     run_string_to_math_torture();
     run_sort_torture();
+    run_synthesis_pretrain();
     run_cps_stress_test();
 }

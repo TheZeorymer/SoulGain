@@ -19,12 +19,14 @@ pub struct ContextSnapshot {
     pub stack_depth: usize,
     pub top_types: [Option<ValueKind>; 3],
     pub recent_opcodes: Vec<i64>,
+    pub data_hash: u64,
     pub stack_hash: u64,
 }
 
 #[derive(Clone, Debug)]
 pub struct SkillPattern {
     pub expected_types: [Option<ValueKind>; 3],
+    pub expected_data_hash: Option<u64>,
     pub confidence: f64,
 }
 
@@ -86,6 +88,7 @@ pub struct SkillOutcome {
     pub used_tick: u64,
     pub task_tag: Option<u64>,
     pub context_top_types: [Option<ValueKind>; 3],
+    pub data_hash: u64,
     pub stack_hash: u64,
 }
 
@@ -155,7 +158,8 @@ impl IntuitionEngine {
             stack_depth: stack.len(),
             top_types: top_types.clone(),
             recent_opcodes: recent.iter().copied().collect(),
-            stack_hash: stack_signature_hash(stack.len(), &top_types),
+            data_hash: scalar_data_hash(stack),
+            stack_hash: stack_signature_hash(stack.len(), &top_types, scalar_data_hash(stack)),
         }
     }
 
@@ -166,6 +170,7 @@ impl IntuitionEngine {
                 skill_id,
                 pattern: SkillPattern {
                     expected_types: [None, None, None],
+                    expected_data_hash: None,
                     confidence: 0.5,
                 },
                 stats: SkillStats::default(),
@@ -275,11 +280,13 @@ impl IntuitionEngine {
         meta.stats.attempts += 1;
         if outcome.success {
             meta.stats.successes += 1;
-            meta.pattern = adapt_pattern_success(&meta.pattern, &outcome.context_top_types);
+            meta.pattern =
+                adapt_pattern_success(&meta.pattern, &outcome.context_top_types, outcome.data_hash);
             meta.stats.base_confidence = (meta.stats.base_confidence + 0.03).clamp(0.05, 0.98);
         } else {
             meta.stats.failures += 1;
-            meta.pattern = adapt_pattern_failure(&meta.pattern, &outcome.context_top_types);
+            meta.pattern =
+                adapt_pattern_failure(&meta.pattern, &outcome.context_top_types, outcome.data_hash);
             meta.stats.base_confidence = (meta.stats.base_confidence - 0.05).clamp(0.05, 0.98);
 
             if meta.recent_failures.len() >= 16 {
@@ -329,7 +336,13 @@ impl IntuitionEngine {
         } else {
             similarity / total
         };
-        (base * pattern.confidence).clamp(0.0, 1.0)
+        let data_sim = match pattern.expected_data_hash {
+            Some(h) if h == ctx.data_hash => 1.0,
+            Some(_) => 0.0,
+            None => 0.5,
+        };
+        let combined = (0.7 * base) + (0.3 * data_sim);
+        (combined * pattern.confidence).clamp(0.0, 1.0)
     }
 
     fn applicability_score(
@@ -408,12 +421,18 @@ pub fn exploration_bonus(skill: &SkillMetadata, total_attempts: u64) -> f64 {
 fn adapt_pattern_success(
     pattern: &SkillPattern,
     observed: &[Option<ValueKind>; 3],
+    data_hash: u64,
 ) -> SkillPattern {
     let mut next = pattern.clone();
     for (idx, observed_ty) in observed.iter().enumerate() {
         if next.expected_types[idx].is_none() {
             next.expected_types[idx] = observed_ty.clone();
         }
+    }
+    if next.expected_data_hash.is_none() {
+        next.expected_data_hash = Some(data_hash);
+    } else if next.expected_data_hash != Some(data_hash) {
+        next.expected_data_hash = None;
     }
     next.confidence = (next.confidence + 0.03).clamp(0.05, 0.98);
     next
@@ -422,6 +441,7 @@ fn adapt_pattern_success(
 fn adapt_pattern_failure(
     pattern: &SkillPattern,
     observed: &[Option<ValueKind>; 3],
+    data_hash: u64,
 ) -> SkillPattern {
     let mut next = pattern.clone();
     for (idx, observed_ty) in observed.iter().enumerate() {
@@ -430,6 +450,9 @@ fn adapt_pattern_failure(
                 next.expected_types[idx] = None;
             }
         }
+    }
+    if next.expected_data_hash == Some(data_hash) {
+        next.expected_data_hash = None;
     }
     next.confidence = (next.confidence - 0.04).clamp(0.05, 0.98);
     next
@@ -445,10 +468,11 @@ fn value_kind(v: &UVal) -> ValueKind {
     }
 }
 
-fn stack_signature_hash(depth: usize, top_types: &[Option<ValueKind>; 3]) -> u64 {
+fn stack_signature_hash(depth: usize, top_types: &[Option<ValueKind>; 3], data_hash: u64) -> u64 {
     let mut h = 0xcbf29ce484222325u64;
     h ^= depth as u64;
     h = h.wrapping_mul(0x100000001b3);
+
     for t in top_types {
         let code = match t {
             None => 0u64,
@@ -457,6 +481,31 @@ fn stack_signature_hash(depth: usize, top_types: &[Option<ValueKind>; 3]) -> u64
             Some(ValueKind::Number) => 3,
             Some(ValueKind::String) => 4,
             Some(ValueKind::Object) => 5,
+        };
+        h ^= code;
+        h = h.wrapping_mul(0x100000001b3);
+    }
+
+    h ^= data_hash;
+    h = h.wrapping_mul(0x100000001b3);
+    h
+}
+
+fn scalar_data_hash(stack: &[UVal]) -> u64 {
+    let mut h = 0xcbf29ce484222325u64;
+    for v in stack.iter().rev().take(3) {
+        let code = match v {
+            UVal::Bool(b) => {
+                if *b {
+                    0xB001
+                } else {
+                    0xB000
+                }
+            }
+            UVal::Number(n) => n.to_bits(),
+            UVal::Nil => 0xA11_u64,
+            UVal::String(s) => s.len() as u64,
+            UVal::Object(_) => 0x0BEE_u64,
         };
         h ^= code;
         h = h.wrapping_mul(0x100000001b3);
