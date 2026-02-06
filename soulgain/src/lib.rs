@@ -1,11 +1,17 @@
-pub mod types;
-pub mod vm;
+pub mod evolution;
 pub mod memory;
 pub mod plasticity;
-pub mod evolution;
+pub mod types;
+pub mod vm;
 // Add this line to src/lib.rs
 pub mod hypothesis;
-pub use types::{UVal, SkillLibrary};
+pub mod logic;
 pub use memory::MemorySystem;
-pub use plasticity::{Plasticity, Event, VMError};
+pub use plasticity::{Event, Plasticity, VMError};
+pub use types::{SkillLibrary, UVal};
 pub use vm::{Op, SoulGainVM, SKILL_OPCODE_BASE};
+
+pub use logic::{
+    aggregate_trace_logic, logic_of, validate_ops, LogicInfo, LogicValidationError,
+    TraceLogicSummary,
+};
