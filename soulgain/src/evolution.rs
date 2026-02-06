@@ -95,7 +95,7 @@ impl Trainer {
         let mut best_program: Option<Vec<f64>> = None;
         let mut best_fitness = 0.0;
 
-        let input_preamble_len = input.len() * 2;
+        let input_preamble_len = 0;
         let shape_id = self.detect_problem_shape(&input, &expected);
 
         for current_len in 1..=self.max_program_len {
@@ -123,13 +123,6 @@ impl Trainer {
                     let hypothesis = Hypothesis::generate(current_len, &skills);
 
                     self.program_buf.clear();
-                    // Load inputs
-                    for value in &input {
-                        if let UVal::Number(n) = value {
-                            self.program_buf.push(Op::Literal.as_f64());
-                            self.program_buf.push(*n);
-                        }
-                    }
                     let start = self.program_buf.len();
                     self.program_buf.extend_from_slice(&hypothesis.logic);
 
@@ -348,17 +341,10 @@ impl Trainer {
         shape_id: u8,
     ) -> (Event, usize) {
         self.program_buf.clear();
-        let mut stack_depth = 0usize;
-        for value in input {
-            if let UVal::Number(n) = value {
-                self.program_buf.push(Op::Literal.as_f64());
-                self.program_buf.push(*n);
-                stack_depth += 1;
-            }
-        }
+        let mut stack_depth = input.len();
         let logic_start = self.program_buf.len();
         let mut last_event = Event::Opcode {
-            opcode: Op::Literal.as_i64(),
+            opcode: Op::Intuition.as_i64(),
             stack_depth,
         };
         self.vm.plasticity.observe(Event::Context(shape_id));
@@ -575,6 +561,10 @@ impl Trainer {
 
         for (input, expected) in examples {
             let mut program = self.materialize_program(input, logic);
+            self.vm.stack.clear();
+            for v in input {
+                self.vm.stack.push(v.clone());
+            }
             let result = self.execute_program(&mut program);
             let fitness = self.calculate_fitness(&result, expected);
             total += fitness;
@@ -587,15 +577,8 @@ impl Trainer {
         (total / examples.len() as f64, solved_all)
     }
 
-    fn materialize_program(&self, input: &[UVal], logic: &[f64]) -> Vec<f64> {
-        let mut program = Vec::with_capacity(input.len() * 2 + logic.len());
-        for value in input {
-            if let UVal::Number(n) = value {
-                program.push(Op::Literal.as_f64());
-                program.push(*n);
-            }
-        }
-        program.extend_from_slice(logic);
+    fn materialize_program(&self, _input: &[UVal], logic: &[f64]) -> Vec<f64> {
+        let mut program = logic.to_vec();
         if program.last() != Some(&Op::Halt.as_f64()) {
             program.push(Op::Halt.as_f64());
         }
@@ -656,7 +639,6 @@ impl Trainer {
     }
 
     fn execute_program(&mut self, program: &mut Vec<f64>) -> Vec<UVal> {
-        self.vm.stack.clear();
         self.vm.ip = 0;
         let previous = std::mem::replace(&mut self.vm.program, std::mem::take(program));
         self.vm.run(10_000);

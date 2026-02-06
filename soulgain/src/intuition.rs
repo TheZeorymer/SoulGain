@@ -20,13 +20,15 @@ pub struct ContextSnapshot {
     pub top_types: [Option<ValueKind>; 3],
     pub recent_opcodes: Vec<i64>,
     pub data_hash: u64,
+    pub feature_hash: u64,
     pub stack_hash: u64,
 }
 
 #[derive(Clone, Debug)]
 pub struct SkillPattern {
     pub expected_types: [Option<ValueKind>; 3],
-    pub expected_data_hash: Option<u64>,
+    pub expected_data_bits: u64,
+    pub expected_data_mask: u64,
     pub confidence: f64,
 }
 
@@ -89,6 +91,7 @@ pub struct SkillOutcome {
     pub task_tag: Option<u64>,
     pub context_top_types: [Option<ValueKind>; 3],
     pub data_hash: u64,
+    pub feature_hash: u64,
     pub stack_hash: u64,
 }
 
@@ -153,13 +156,15 @@ impl IntuitionEngine {
             top_types[idx] = Some(value_kind(value));
         }
 
+        let data_hash = scalar_data_hash(stack);
         ContextSnapshot {
             task_tag,
             stack_depth: stack.len(),
             top_types: top_types.clone(),
             recent_opcodes: recent.iter().copied().collect(),
-            data_hash: scalar_data_hash(stack),
-            stack_hash: stack_signature_hash(stack.len(), &top_types, scalar_data_hash(stack)),
+            data_hash,
+            feature_hash: data_hash,
+            stack_hash: stack_signature_hash(stack.len(), &top_types, data_hash),
         }
     }
 
@@ -170,7 +175,8 @@ impl IntuitionEngine {
                 skill_id,
                 pattern: SkillPattern {
                     expected_types: [None, None, None],
-                    expected_data_hash: None,
+                    expected_data_bits: 0,
+                    expected_data_mask: 0,
                     confidence: 0.5,
                 },
                 stats: SkillStats::default(),
@@ -184,6 +190,8 @@ impl IntuitionEngine {
         if let Some(meta) = self.skill_meta.get_mut(&skill_id) {
             if meta.pattern.expected_types == [None, None, None] {
                 meta.pattern.expected_types = ctx.top_types.clone();
+                meta.pattern.expected_data_bits = ctx.feature_hash;
+                meta.pattern.expected_data_mask = u64::MAX;
             }
         }
     }
@@ -280,13 +288,19 @@ impl IntuitionEngine {
         meta.stats.attempts += 1;
         if outcome.success {
             meta.stats.successes += 1;
-            meta.pattern =
-                adapt_pattern_success(&meta.pattern, &outcome.context_top_types, outcome.data_hash);
+            meta.pattern = adapt_pattern_success(
+                &meta.pattern,
+                &outcome.context_top_types,
+                outcome.feature_hash,
+            );
             meta.stats.base_confidence = (meta.stats.base_confidence + 0.03).clamp(0.05, 0.98);
         } else {
             meta.stats.failures += 1;
-            meta.pattern =
-                adapt_pattern_failure(&meta.pattern, &outcome.context_top_types, outcome.data_hash);
+            meta.pattern = adapt_pattern_failure(
+                &meta.pattern,
+                &outcome.context_top_types,
+                outcome.feature_hash,
+            );
             meta.stats.base_confidence = (meta.stats.base_confidence - 0.05).clamp(0.05, 0.98);
 
             if meta.recent_failures.len() >= 16 {
@@ -336,10 +350,12 @@ impl IntuitionEngine {
         } else {
             similarity / total
         };
-        let data_sim = match pattern.expected_data_hash {
-            Some(h) if h == ctx.data_hash => 1.0,
-            Some(_) => 0.0,
-            None => 0.5,
+        let data_sim = if pattern.expected_data_mask == 0 {
+            0.5
+        } else {
+            let expected = pattern.expected_data_bits & pattern.expected_data_mask;
+            let got = ctx.feature_hash & pattern.expected_data_mask;
+            if expected == got { 1.0 } else { 0.0 }
         };
         let combined = (0.7 * base) + (0.3 * data_sim);
         (combined * pattern.confidence).clamp(0.0, 1.0)
@@ -421,7 +437,7 @@ pub fn exploration_bonus(skill: &SkillMetadata, total_attempts: u64) -> f64 {
 fn adapt_pattern_success(
     pattern: &SkillPattern,
     observed: &[Option<ValueKind>; 3],
-    data_hash: u64,
+    feature_hash: u64,
 ) -> SkillPattern {
     let mut next = pattern.clone();
     for (idx, observed_ty) in observed.iter().enumerate() {
@@ -429,10 +445,13 @@ fn adapt_pattern_success(
             next.expected_types[idx] = observed_ty.clone();
         }
     }
-    if next.expected_data_hash.is_none() {
-        next.expected_data_hash = Some(data_hash);
-    } else if next.expected_data_hash != Some(data_hash) {
-        next.expected_data_hash = None;
+    if next.expected_data_mask == 0 {
+        next.expected_data_bits = feature_hash;
+        next.expected_data_mask = u64::MAX;
+    } else {
+        let diff = next.expected_data_bits ^ feature_hash;
+        next.expected_data_mask &= !diff;
+        next.expected_data_bits &= next.expected_data_mask;
     }
     next.confidence = (next.confidence + 0.03).clamp(0.05, 0.98);
     next
@@ -441,7 +460,7 @@ fn adapt_pattern_success(
 fn adapt_pattern_failure(
     pattern: &SkillPattern,
     observed: &[Option<ValueKind>; 3],
-    data_hash: u64,
+    _feature_hash: u64,
 ) -> SkillPattern {
     let mut next = pattern.clone();
     for (idx, observed_ty) in observed.iter().enumerate() {
@@ -451,9 +470,7 @@ fn adapt_pattern_failure(
             }
         }
     }
-    if next.expected_data_hash == Some(data_hash) {
-        next.expected_data_hash = None;
-    }
+    // Keep mask/bits stable on failure; confidence handles down-weighting.
     next.confidence = (next.confidence - 0.04).clamp(0.05, 0.98);
     next
 }
@@ -497,14 +514,23 @@ fn scalar_data_hash(stack: &[UVal]) -> u64 {
         let code = match v {
             UVal::Bool(b) => {
                 if *b {
-                    0xB001
+                    0xB001_u64
                 } else {
-                    0xB000
+                    0xB000_u64
                 }
             }
-            UVal::Number(n) => n.to_bits(),
+            UVal::Number(n) => {
+                let bits = n.to_bits();
+                let is_int = n.fract().abs() < f64::EPSILON;
+                let parity_bit = if is_int {
+                    (bits as i64 & 1) as u64
+                } else {
+                    2_u64
+                };
+                (bits.rotate_left(13)) ^ parity_bit
+            }
             UVal::Nil => 0xA11_u64,
-            UVal::String(s) => s.len() as u64,
+            UVal::String(s) => (s.len() as u64).wrapping_mul(1315423911),
             UVal::Object(_) => 0x0BEE_u64,
         };
         h ^= code;

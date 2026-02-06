@@ -122,6 +122,7 @@ struct SkillInvocation {
     task_tag: Option<u64>,
     context_top_types: [Option<ValueKind>; 3],
     data_hash: u64,
+    feature_hash: u64,
     stack_hash: u64,
 }
 
@@ -198,6 +199,7 @@ impl SoulGainVM {
                         task_tag: invocation.task_tag,
                         context_top_types: invocation.context_top_types,
                         data_hash: invocation.data_hash,
+                        feature_hash: invocation.feature_hash,
                         stack_hash: invocation.stack_hash,
                     },
                 );
@@ -276,6 +278,7 @@ impl SoulGainVM {
                     task_tag: ctx.task_tag,
                     context_top_types: ctx.top_types,
                     data_hash: ctx.data_hash,
+                    feature_hash: ctx.feature_hash,
                     stack_hash: ctx.stack_hash,
                 }),
             };
