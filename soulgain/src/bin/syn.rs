@@ -1,8 +1,13 @@
 use rand::Rng;
-use soulgain::SoulGainVM;
 use soulgain::evolution::Trainer;
 use soulgain::types::UVal;
 use soulgain::vm::Op;
+use soulgain::SoulGainVM;
+
+// --- CONSTANTS FOR PERSISTENCE ---
+const SKILLS_PATH: &str = "skills.json";
+const PLASTICITY_PATH: &str = "plasticity.json";
+const ATTEMPTS_LIMIT: usize = 100_000; // Increased to 100k as requested
 
 fn random_examples(n: usize, mul: bool) -> Vec<(Vec<UVal>, Vec<UVal>)> {
     let mut rng = rand::thread_rng();
@@ -20,83 +25,60 @@ fn random_examples(n: usize, mul: bool) -> Vec<(Vec<UVal>, Vec<UVal>)> {
         .collect()
 }
 
-fn run_honest_synthesis() {
-    println!("\n=== Honest Synthesis (multi-example stack mode) ===");
-    let mut trainer = Trainer::new(SoulGainVM::new(vec![]), 12);
-
-    let add_mod_examples = random_examples(5, false);
-    let mul_mod_examples = random_examples(5, true);
-
-    let add_prog = trainer.synthesize(&add_mod_examples, 140);
-    let mul_prog = trainer.synthesize(&mul_mod_examples, 140);
-
-    println!("AddMod examples: {:?}", add_mod_examples);
-    println!("AddMod program: {:?}", add_prog);
-    println!("MulMod examples: {:?}", mul_mod_examples);
-    println!("MulMod program: {:?}", mul_prog);
-}
-
-fn run_even_odd_routing_feedback() {
-    println!("\n=== Intuition Routing Loop (Even/Odd by value features) ===");
-
-    let mut vm = SoulGainVM::new(vec![]);
-
-    // Skills are macro programs; Intuition should learn to pick based on stack value features.
-    // even_skill: n -> (n % 2 == 0)
-    vm.skills.define_skill(
-        2001,
-        vec![
-            Op::Literal.as_f64(),
-            2.0,
-            Op::Mod.as_f64(),
-            Op::IsZero.as_f64(),
-            Op::Halt.as_f64(),
-        ],
-    );
-
-    // odd_skill: n -> (n % 2 != 0)
-    vm.skills.define_skill(
-        2002,
-        vec![
-            Op::Literal.as_f64(),
-            2.0,
-            Op::Mod.as_f64(),
-            Op::IsZero.as_f64(),
-            Op::Not.as_f64(),
-            Op::Halt.as_f64(),
-        ],
-    );
-
-    let mut rng = rand::thread_rng();
-    let mut correct = 0usize;
-    let rounds = 80usize;
-
-    for _ in 0..rounds {
-        let n = rng.gen_range(1..40) as f64;
-        let expected_even = (n as i64) % 2 == 0;
-
-        vm.program = vec![Op::Intuition.as_f64(), Op::Halt.as_f64()];
-        vm.stack.clear();
-        vm.stack.push(UVal::Number(n));
-        vm.ip = 0;
-        vm.run(200);
-
-        let predicted = matches!(vm.stack.last(), Some(UVal::Bool(b)) if *b);
-        let is_correct = predicted == expected_even;
-
-        if is_correct {
-            correct += 1;
-            // Positive reinforcement signal; pending-credit logic can assign this to recent skill usage.
-            vm.program = vec![Op::Reward.as_f64(), Op::Halt.as_f64()];
-            vm.ip = 0;
-            vm.run(20);
-        }
-    }
-
-    println!("Even/Odd routing accuracy: {}/{}", correct, rounds);
+fn print_separator(title: &str) {
+    println!("\n{}", "=".repeat(80));
+    println!("  {}", title);
+    println!("{}", "=".repeat(80));
 }
 
 fn main() {
-    run_honest_synthesis();
-    run_even_odd_routing_feedback();
+    print_separator("SoulGain High-Intensity Synthesis & Persistence Run");
+
+    // Initialize VM and try to load existing state
+    let mut vm = SoulGainVM::new(vec![]);
+    
+    if let Ok(_) = vm.plasticity.load_from_file(PLASTICITY_PATH) {
+        println!("✓ Loaded existing plasticity from {}", PLASTICITY_PATH);
+    }
+    
+    // Note: SkillLibrary currently lacks a built-in load_from_file in the provided snippet,
+    // but the Trainer will populate new skills into the VM's registry.
+
+    let mut trainer = Trainer::new(vm, 15); // Increased max program length for complexity
+
+    // --- TEST 1: MODULAR ARITHMETIC ---
+    println!("\n[Task 1] Addition Modulo (Attempts: {})", ATTEMPTS_LIMIT);
+    let add_examples = random_examples(5, false);
+    if let Some(program) = trainer.synthesize(&add_examples, ATTEMPTS_LIMIT) {
+        println!("✓ Synthesized AddMod: {:?}", program);
+    }
+
+    // --- TEST 2: EVEN/ODD LOGIC ---
+    println!("\n[Task 2] Even/Odd Detection (Attempts: {})", ATTEMPTS_LIMIT);
+    let even_inputs = vec![vec![UVal::Number(4.0)], vec![UVal::Number(7.0)], vec![UVal::Number(12.0)]];
+    let even_examples: Vec<(Vec<UVal>, Vec<UVal>)> = even_inputs.iter().map(|input| {
+        let n = if let Some(UVal::Number(num)) = input.first() { *num } else { 0.0 };
+        (input.clone(), vec![UVal::Bool((n as i64) % 2 == 0)])
+    }).collect();
+
+    if let Some(program) = trainer.synthesize(&even_examples, ATTEMPTS_LIMIT) {
+        println!("✓ Synthesized Even/Odd: {:?}", program);
+    }
+
+    // --- PERSISTENCE BLOCK ---
+    print_separator("SAVING BRAIN STATE");
+    
+    // Save Plasticity weights
+    match trainer.vm.plasticity.save_to_file(PLASTICITY_PATH) {
+        Ok(_) => println!("✓ Plasticity saved to {}", PLASTICITY_PATH),
+        Err(e) => println!("✗ Plasticity save failed: {}", e),
+    }
+
+    // To save skills.json, we manually serialize the SkillLibrary
+    let skills_file = std::fs::File::create(SKILLS_PATH).expect("Failed to create skills file");
+    if let Ok(_) = serde_json::to_writer_pretty(skills_file, &trainer.vm.skills) {
+        println!("✓ Skills saved to {}", SKILLS_PATH);
+    }
+
+    println!("\nRun complete. Check {} and {} for persisted data.", SKILLS_PATH, PLASTICITY_PATH);
 }
