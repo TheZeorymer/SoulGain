@@ -12,6 +12,6 @@ pub use types::{SkillLibrary, UVal};
 pub use vm::{Op, SoulGainVM, SKILL_OPCODE_BASE};
 
 pub use logic::{
-    aggregate_trace_logic, logic_of, validate_ops, LogicInfo, LogicValidationError,
-    TraceLogicSummary,
+    aggregate_trace_logic, category_of, logic_of, validate_ops, LogicInfo, LogicValidationError,
+    OpCategory, TraceLogicSummary,
 };

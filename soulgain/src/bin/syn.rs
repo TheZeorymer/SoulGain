@@ -1,8 +1,10 @@
+use std::sync::Arc;
 use std::time::Instant;
 
-use soulgain::SoulGainVM;
-use soulgain::logic::{aggregate_trace_logic, all_ops, logic_of, validate_ops};
+use soulgain::logic::{aggregate_trace_logic, all_ops, category_of, logic_of, validate_ops};
+use soulgain::types::UVal;
 use soulgain::vm::Op;
+use soulgain::SoulGainVM;
 
 fn run_cps_stress_test() {
     let program = vec![
@@ -30,16 +32,53 @@ fn run_cps_stress_test() {
     );
 }
 
+fn run_string_to_math_torture() {
+    let mut vm = SoulGainVM::new(vec![
+        Op::Parse.as_f64(),
+        Op::Literal.as_f64(),
+        5.0,
+        Op::Add.as_f64(),
+        Op::Halt.as_f64(),
+    ]);
+    vm.stack.push(UVal::String(Arc::new("37.5".to_string())));
+    vm.run(1000);
+    println!("\n=== String -> Math Torture ===");
+    println!("result stack: {:?}", vm.stack);
+}
+
+fn run_sort_torture() {
+    // Two-element compare/swap template form: [Over, Over, Gt, JmpIf(2), Swap]
+    let program = vec![
+        Op::Over.as_f64(),
+        Op::Over.as_f64(),
+        Op::Gt.as_f64(),
+        Op::JmpIf.as_f64(),
+        6.0,
+        Op::Halt.as_f64(),
+        Op::Swap.as_f64(),
+        Op::Halt.as_f64(),
+    ];
+
+    let mut vm = SoulGainVM::new(program);
+    vm.stack.push(UVal::Number(9.0));
+    vm.stack.push(UVal::Number(2.0));
+    vm.run(1000);
+    println!("\n=== Sort Torture (2-value compare/swap) ===");
+    println!("result stack: {:?}", vm.stack);
+}
+
 fn main() {
     println!("=== SoulGain Op Logic Table ===");
     for op in all_ops() {
         let info = logic_of(*op);
+        let category = category_of(*op);
         println!(
-            "{:>10} ({:>2}) -> stack_delta: {:+}, may_branch: {}",
+            "{:>10} ({:>2}) -> stack_delta: {:+}, may_branch: {}, category: {:?}",
             format!("{:?}", op),
             op.as_i64(),
             info.stack_delta,
-            info.may_branch
+            info.may_branch,
+            category
         );
     }
 
@@ -58,5 +97,7 @@ fn main() {
     println!("trace: {:?}", trace);
     println!("summary: {:?}", summary);
 
+    run_string_to_math_torture();
+    run_sort_torture();
     run_cps_stress_test();
 }

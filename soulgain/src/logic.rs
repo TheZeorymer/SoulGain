@@ -19,6 +19,16 @@ pub enum LogicValidationError {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OpCategory {
+    Arithmetic,
+    Logic,
+    Data,
+    ControlFlow,
+    Memory,
+    Meta,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TraceLogicSummary {
     pub net_stack_delta: isize,
     pub has_branch: bool,
@@ -138,6 +148,10 @@ pub fn logic_of(op: Op) -> LogicInfo {
             stack_delta: 0,
             may_branch: false,
         },
+        Op::Parse => LogicInfo {
+            stack_delta: 0,
+            may_branch: false,
+        },
     }
 }
 
@@ -152,7 +166,8 @@ fn min_stack_required(op: Op) -> usize {
         | Op::Drop
         | Op::IsZero
         | Op::Inc
-        | Op::Dec => 1,
+        | Op::Dec
+        | Op::Parse => 1,
         Op::Add
         | Op::Sub
         | Op::Mul
@@ -205,6 +220,19 @@ pub fn validate_ops(program: &[Op]) -> Result<(), LogicValidationError> {
     }
 
     Ok(())
+}
+
+pub fn category_of(op: Op) -> OpCategory {
+    match op {
+        Op::Literal | Op::Dup | Op::Over | Op::Drop | Op::Swap | Op::Parse => OpCategory::Data,
+        Op::Store | Op::Load => OpCategory::Memory,
+        Op::Jmp | Op::JmpIf | Op::Call | Op::Ret | Op::Halt | Op::Intuition => {
+            OpCategory::ControlFlow
+        }
+        Op::Add | Op::Sub | Op::Mul | Op::Mod | Op::Inc | Op::Dec => OpCategory::Arithmetic,
+        Op::Eq | Op::Gt | Op::Not | Op::And | Op::Or | Op::Xor | Op::IsZero => OpCategory::Logic,
+        Op::Reward | Op::Evolve => OpCategory::Meta,
+    }
 }
 
 pub fn aggregate_trace_logic(trace: &[Op]) -> TraceLogicSummary {
@@ -291,5 +319,6 @@ pub fn all_ops() -> &'static [Op] {
         Op::Mod,
         Op::Inc,
         Op::Dec,
+        Op::Parse,
     ]
 }

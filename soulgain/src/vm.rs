@@ -38,6 +38,7 @@ pub enum Op {
     Mod = 26,
     Inc = 27,
     Dec = 28,
+    Parse = 29,
 }
 
 impl Op {
@@ -71,6 +72,7 @@ impl Op {
             26 => Some(Op::Mod),
             27 => Some(Op::Inc),
             28 => Some(Op::Dec),
+            29 => Some(Op::Parse),
             _ => None,
         }
     }
@@ -527,6 +529,15 @@ impl SoulGainVM {
             Op::Dec => match self.stack.pop() {
                 Some(UVal::Number(n)) => self.stack.push(UVal::Number(n - 1.0)),
                 Some(_) => self.record_error(VMError::InvalidOpcode(opcode.as_i64())),
+                None => self.record_error(VMError::StackUnderflow),
+            },
+            Op::Parse => match self.stack.pop() {
+                Some(UVal::String(text)) => match text.parse::<f64>() {
+                    Ok(n) => self.stack.push(UVal::Number(n)),
+                    Err(_) => self.stack.push(UVal::Nil),
+                },
+                Some(UVal::Number(n)) => self.stack.push(UVal::Number(n)),
+                Some(_) => self.stack.push(UVal::Nil),
                 None => self.record_error(VMError::StackUnderflow),
             },
         }

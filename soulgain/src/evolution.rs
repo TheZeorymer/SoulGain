@@ -1,7 +1,7 @@
 use crate::hypothesis::Hypothesis;
 use crate::plasticity::Event;
 use crate::types::UVal;
-use crate::{Op, SKILL_OPCODE_BASE, SoulGainVM};
+use crate::{Op, SoulGainVM, SKILL_OPCODE_BASE};
 use rand::Rng;
 use std::collections::HashSet;
 use std::fs::OpenOptions;
@@ -41,23 +41,43 @@ impl Trainer {
             return 3;
         }
 
-        let mut deltas = Vec::new();
+        let mut has_str_to_num = false;
+        let mut numeric_deltas = Vec::new();
+
         for (a, b) in input.iter().zip(expected.iter()) {
-            if let (UVal::Number(x), UVal::Number(y)) = (a, b) {
-                deltas.push((*y - *x).round() as i64);
+            match (a, b) {
+                (UVal::String(_), UVal::Number(_)) => {
+                    has_str_to_num = true;
+                }
+                (UVal::Number(x), UVal::Number(y)) => {
+                    numeric_deltas.push(*y - *x);
+                }
+                _ => {}
             }
         }
 
-        if deltas.is_empty() {
-            return 0;
+        if has_str_to_num {
+            return 5;
         }
-        if deltas.iter().all(|d| *d == 1) || deltas.iter().all(|d| *d == -1) {
-            return 1;
+
+        if !numeric_deltas.is_empty() {
+            let baseline = numeric_deltas[0];
+            let all_same = numeric_deltas
+                .iter()
+                .all(|d| (*d - baseline).abs() < f64::EPSILON);
+            if !all_same {
+                return 6;
+            }
+            if (baseline - 1.0).abs() < f64::EPSILON || (baseline + 1.0).abs() < f64::EPSILON {
+                return 1;
+            }
+            if baseline.abs() < f64::EPSILON {
+                return 2;
+            }
+            return 4;
         }
-        if deltas.iter().all(|d| *d == 0) {
-            return 2;
-        }
-        4
+
+        0
     }
 
     pub fn synthesize<O: Oracle + ?Sized>(
@@ -389,6 +409,7 @@ impl Trainer {
             Op::Mod.as_i64(),
             Op::Inc.as_i64(),
             Op::Dec.as_i64(),
+            Op::Parse.as_i64(),
             Op::Eq.as_i64(),
             Op::Gt.as_i64(),
             Op::Not.as_i64(),
@@ -452,6 +473,10 @@ impl Trainer {
                     }
                 }
 
+                if shape_id == 5 && op == Op::Parse.as_i64() {
+                    weight += 12.0;
+                }
+
                 if op >= SKILL_OPCODE_BASE {
                     weight += 1.2;
                 }
@@ -492,6 +517,7 @@ impl Trainer {
             Op::Mod.as_i64(),
             Op::Inc.as_i64(),
             Op::Dec.as_i64(),
+            Op::Parse.as_i64(),
             Op::Eq.as_i64(),
             Op::Gt.as_i64(),
             Op::Not.as_i64(),
